@@ -9,9 +9,13 @@
 #
 # DOWNLOAD = HOST or ROM
 
+
+
 DOWNLOAD="HOST"
-WAVEFORM_FILE="current_skipper.waveforms"
-DST_FILE="tim_skipper"
+WAVEFORM_FILE="$1.waveforms"
+DST_FILE="pit_skipper_$1"
+#DST_FILE=$1
+
 
 wine ./motorolaCompiler/ASM56300 -b -ltim.ls -d DOWNLOAD $DOWNLOAD -d WAVEFORM_FILE "$WAVEFORM_FILE" tim.asm
 wine ./motorolaCompiler/DSPLNK -btim.cld -v tim.cln 
@@ -20,13 +24,9 @@ wine ./motorolaCompiler/CLDLOD tim.cld > "$DST_FILE".lod
 rm -f tim.cln ; rm -f tim.cld
 #dos2unix "$DST_FILE".lod
 
-#	echo ""
-#	echo "Created file 'tim.lod' for downloading over optical fiber"
-#	echo ""
-
 if [ "$DOWNLOAD" = "HOST" ] ; then
 	echo ""
-	echo "Created $DST_FILE.lod for downloading over optical fiber"
+	echo "Created file $DST_FILE.lod for downloading over optical fiber"
 	echo ""
 fi
 

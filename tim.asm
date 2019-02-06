@@ -40,7 +40,10 @@ IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
 	;MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
 	;JSR     <CLOCK  		; Go to it
 
-	MOVE    #<SERIAL_IDLE_B,R0 	; Serial transfer on pixel
+	MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
+	JSR     <CLOCK  		; Go to it
+
+	MOVE    #<SERIAL_IDLE_T2,R0 	; Serial transfer on pixel
 	JSR     <CLOCK  		; Go to it
 
 
@@ -239,7 +242,7 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'SBN',SET_BIAS_NUMBER
 	DC	'SMX',SET_MUX
 	DC	'CSW',CLR_SWS
-	;DC	'SOS',SEL_OS
+	DC	'SOS',SEL_OS
 	DC	'SSS',SET_SUBARRAY_SIZES
 	DC	'SSP',SET_SUBARRAY_POSITIONS
 	DC	'RCC',READ_CONTROLLER_CONFIGURATION 
@@ -306,13 +309,8 @@ SH_DEL	DC	10		; Delay in milliseconds between shutter closing
 				;   and image readout
 CONFIG	DC	CC		; Controller configuration
 NS_READ DC      0               ; brought in for roi r.a. 3/21/2011
-;OS	DC	'ALL'		; Output Source selection (1side 9/25/07 JE) 
-OS	DC	'L'		; Output Source selection (1side 9/25/07 JE) 
-;OS	DC	'LR'		; Output Source selection (2sides)
-; RCOLS	DC      300             ; Real # of cols to read in array
-; RROWS	DC      300            ; Real # of rows to read in array
-;RCOLS	DC      10     ;2060      ;320            ; Real # of cols to read in array
-;RROWS	DC      10       ;1100            ; Real # of rows to read in array
+OS	DC	'__L'		; Output Source selection (1side 9/25/07 JE) 
+
 
 
 ; Multiple readout addresses

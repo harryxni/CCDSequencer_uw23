@@ -215,6 +215,12 @@ SET_EXPOSURE_TIME
 	MOVEP	Y0,X:TCPR0
 	JMP	<FINISH
 
+; Set the desired Skipper repeat times
+SET_SKIPPER_REPEAT
+	MOVE	X:(R3)+,Y0
+	MOVE	Y0,X:PIT_SKREPEAT
+	JMP	<FINISH
+
 ; Read the time remaining until the exposure ends
 READ_EXPOSURE_TIME
 	MOVE	X:TCR0,Y1		; Read elapsed exposure time

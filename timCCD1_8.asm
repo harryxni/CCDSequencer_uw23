@@ -647,3 +647,34 @@ LNG_DLY DO      #4050,LNGDLY
 LNGDLY
         RTS
 
+; Select which readouts to process
+;   'SOS'  Amplifier_name  
+;       Amplifier_name = '__L', '__R', '_LR'
+
+SEL_OS  MOVE    X:(R3)+,X0              ; Get amplifier(s) name
+        MOVE    X0,Y:<OS
+        JSR     <SELECT_OUTPUT_SOURCE
+        JMP     <FINISH1
+
+
+; A massive subroutine for setting all the addresses depending on the
+;   output source(s) selection and binning parameter.
+SELECT_OUTPUT_SOURCE
+
+; Set all the waveform addresses depending on which readout mode
+        MOVE    #'__L',A                ; LEFT Amplifier = readout #0
+        CMP     X0,A
+        ;JNE     <CMP_R
+        BCLR    #SPLIT_P,X:STATUS
+       	MOVE	#SERIAL_SKIP_L,X0
+	MOVE	X0,Y:SERIAL_SKIP
+	MOVE	#SERIAL_READ_L,X0
+	MOVE	X0,Y:<SERIAL_READ
+        MOVE    #$00F041,X0             ; Transmit channel 0   6/16/2011 was 00f000 no work __L new cable
+CMP_RR  MOVE    X0,Y:SXL2
+        BCLR    #SPLIT_S,X:STATUS
+        JMP     <CMP_END
+
+CMP_END MOVE    X0,Y:SXMIT
+        MOVE    #'DON',Y1
+        RTS

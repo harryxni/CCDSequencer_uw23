@@ -143,18 +143,21 @@ RL      EQU     0
 RH      EQU     $300	; $300 = pin 34 (0x100) + pin 35 (0x200) 
 
 
+
+
+
+
 ;  ***  Definitions for Y: memory waveform tables  *****
 ; Clock the Parallel clocks : I1->I2->I3, always
 PARALLEL
         DC      PARALLEL_CLEAR-PARALLEL-1
         DC      CLK3+$000000+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;SW->lo
-        ;Starting point : V1H-V2L-V3H along with TH+G2H+DUMPGH
-        DC      CLK2+P_DELAY+V1H+V2L+V3L+TL+G2H+DUMPGH      ; 3 low
-        DC      CLK2+P_DELAY+V1H+V2H+V3L+TL+G2H+DUMPGH      ; 2 hi
-        DC      CLK2+P_DELAY+V1L+V2H+V3L+TL+G2H+DUMPGH      ; 1 low
-        DC      CLK2+P_DELAY+V1L+V2H+V3H+TL+G2H+DUMPGH      ; 3 hi
-        DC      CLK2+P_DELAY+V1L+V2L+V3H+TL+G2H+DUMPGH      ; 2 lo
-	DC      CLK2+P_DELAY+V1H+V2L+V3H+TH+G2H+DUMPGH      ; 1 hi + shut TG
+        DC      CLK2+P_DELAY+V1H+V2L+V3H+TL+G2H+DUMPGH      ;
+        DC      CLK2+P_DELAY+V1L+V2L+V3H+TL+G2H+DUMPGH     ; 1 low
+        DC      CLK2+P_DELAY+V1L+V2H+V3H+TL+G2H+DUMPGH      ; 2 hi
+        DC      CLK2+P_DELAY+V1L+V2H+V3L+TL+G2H+DUMPGH      ; 3 low
+        DC      CLK2+P_DELAY+V1H+V2H+V3L+TL+G2H+DUMPGH      ; 1 hi
+        DC      CLK2+P_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGH      ; shut TG, 2 lo
 
 
 PARALLEL_CLEAR
@@ -193,7 +196,7 @@ P_EPER  DC      END_P_EPER-P_EPER-1
         DC      CLK2+P_DELAY+V1H+V2H+V3L+TL+G2H+DUMPGH
         DC      CLK2+P_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGH      ; shut TG 
 END_P_EPER 
-;*****REMOVE*** DC 0
+        DC 0
 
 ; Video processor bit definition
 ;            xfer, A/D, integ, Pol+, Pol-, DCrestore, rst   (1 => switch open)
@@ -202,19 +205,19 @@ END_P_EPER
 ; U amp is H3->H2->H1
 
 
+
+
 SERIAL_IDLE_T     ; Clock serial charge from both L and R ends
         DC      END_SERIAL_IDLE_T-SERIAL_IDLE_T-1
         DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt.
 
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;SW->lo,Reset_On
-        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L+G2H ;h1->lo
-        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L+G2H ;h2->hi
-        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L+G2H ;h3->lo
-        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L+G2H ;h1->hi
-
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L+G2H ;h2->lo
-        ;DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;h3->hi,Delay
-	DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;h3->hi,Delay
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L+G2H ;h3->lo
+        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L+G2H ;h2->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L+G2H ;h1->lo
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L+G2H ;h3->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L+G2H ;h2->lo
+	DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;h1->hi,Delay
         DC      CLK3+$000000+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;dummy for transmit delay
 	
 END_SERIAL_IDLE_T	
