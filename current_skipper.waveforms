@@ -143,8 +143,12 @@ RL      EQU     0
 RH      EQU     $300	; $300 = pin 34 (0x100) + pin 35 (0x200) 
 
 
-;  ***  Definitions for Y: memory waveform tables  *****
-; Clock the Parallel clocks : I1->I2->I3, always
+;******************************
+;* VERTICAL REGISTER SECTION  *
+;******************************
+;  
+;Parallel clock direction is V1->V2->V3 in the normal configuration.
+;
 PARALLEL
         DC      PARALLEL_CLEAR-PARALLEL-1
         DC      CLK3+$000000+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;SW->lo
@@ -155,7 +159,6 @@ PARALLEL
         DC      CLK2+P_DELAY+V1L+V2H+V3H+TL+G2H+DUMPGH      ; 3 hi
         DC      CLK2+P_DELAY+V1L+V2L+V3H+TL+G2H+DUMPGH      ; 2 lo
 	DC      CLK2+P_DELAY+V1H+V2L+V3H+TH+G2H+DUMPGH      ; 1 hi + shut TG
-
 
 PARALLEL_CLEAR
         DC      P_PARAL-PARALLEL_CLEAR-1
@@ -195,15 +198,28 @@ P_EPER  DC      END_P_EPER-P_EPER-1
 END_P_EPER 
 ;*****REMOVE*** DC 0
 
-; Video processor bit definition
-;            xfer, A/D, integ, Pol+, Pol-, DCrestore, rst   (1 => switch open)
-; Both amps is H1->H2->H3
-; L amp is H1->H2->H3
-; U amp is H3->H2->H1
+;******************************
+;*   SERIAL REGISTER SECTION  *
+;******************************
+;
+;For this section, one needs to remember the
+;Video processor bit definition: [xfer, A/D, integ, Pol+, Pol-, DCrestore, rst   (1 => switch open) ]
+;
+;The ordering of the clocks (normal configuration) is:
+;Both amps is H1->H2->H3 - wtf does this mean?
+;L amp is H1->H2->H3
+;U amp is H3->H2->H1
 
 
-SERIAL_IDLE_T     ; Clock serial charge from both L and R ends
-        DC      END_SERIAL_IDLE_T-SERIAL_IDLE_T-1
+;*************************************************************************
+;This routine can put the CCD into IDLE mode
+;with no repeated measurements. The Skipper CCD in effect
+;behaves like a regular CCD in IDLE mode 
+;with this routine. This also clocks serial charge from both L and R ends
+;*************************************************************************
+
+SERIAL_IDLE_STAGE_1    
+        DC      END_SERIAL_IDLE_STAGE_1-SERIAL_IDLE_STAGE_1-1
         DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt.
 
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;SW->lo,Reset_On
@@ -217,7 +233,7 @@ SERIAL_IDLE_T     ; Clock serial charge from both L and R ends
 	DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;h3->hi,Delay
         DC      CLK3+$000000+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+G2H ;dummy for transmit delay
 	
-END_SERIAL_IDLE_T	
+END_SERIAL_IDLE_STAGE_1
 
 SERIAL_IDLE_B
 	DC      END_SERIAL_IDLE_B-SERIAL_IDLE_B-1
@@ -231,84 +247,11 @@ SERIAL_IDLE_B
         DC      VIDEO+DCRST_DELAY+%1110111      ; ADCLatch,NonInv  ;mF to do ADC sampling before resetting
 END_SERIAL_IDLE_B
 
-SERIAL_IDLE_T2
-	DC      END_SERIAL_IDLE_T2-SERIAL_IDLE_T2-1
-        ;We need to dump the charges here
-	DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1H+RH ;Dump->low
-	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGL
-	
-	DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+RH ;Dump->high and gate 1 low
-	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGH
-END_SERIAL_IDLE_T2
-
-
-
-;start binning waveforms
-CCD_RESET       ;Used for binning only
-        DC      SERIAL_CLOCK_L-CCD_RESET-1
-
-SERIAL_CLOCK_L  ;"NORMAL" clocking
-        DC      SERIAL_CLOCK_R-SERIAL_CLOCK_L-1
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;h3->lo,SW->lo,Reset_On
-        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h2->hi
-        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L ;h1->lo
-        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L ;h3->hi
-        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L ;h2->lo
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L ;h1->hi
-        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;Reset_Off+Delay
-
-SERIAL_CLOCK_R  ;"REVERSE" clocking
-        DC      SERIAL_CLOCK_LR-SERIAL_CLOCK_R-1
-
-SERIAL_CLOCK_LR ;"SPLIT" clocking
-        DC      VIDEO_PROCESS-SERIAL_CLOCK_LR-1
-
-VIDEO_PROCESS
-        DC      END_VIDEO-VIDEO_PROCESS-1
-SXMIT   DC      $00F000                 ; Transmit A/D data to host
-END_VIDEO
-
-;end binning waveforms
-
-; The fast serial code with the circulating address register must start
-;   on a boundary that is a multiple of the address register modulus.
-
-; Video processor bit definition
-;            xfer, A/D, integ, Pol+, Pol-, DCrestore, rst   (1 => switch open)
-
-; These are the three reading tables. Make sure they're all the same length
-SERIAL_TEST
-        DC      END_SERIAL_TEST-SERIAL_TEST-1
-        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h2->hi
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h2->hi
-END_SERIAL_TEST
 
 
 ; switch the two polarity bits (3rd and 4th from the right000xx00) in all VIDEO words
-SERIAL_READ_L
-;        DC      END_SERIAL_READ_L-SERIAL_READ_L-1
-;        DC      VIDEO+$000000+%1110100  ; NonInv,DCRestore,StrtRstInt.
-;        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;Reset_On
-;        DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h1->lo, Reset_off
-;        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L ;h2->hi
-;        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L ;h3->lo
-;        DC      CLK3+S_DELAY+RL+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L ;h1->hi
-;        DC      CLK3+S_DELAY+RL+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L ;h2->lo
-;        DC      CLK3+PRE_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;h3->hi,Delay
-;SXL     DC      $00F000                 ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime
-;        DC      VIDEO+$000000+%1110111  ; StopDCRestore and StopResetIntegrator 
-;        DC      VIDEO+I_DELAY+%0000111  ; Integrate for I_DELAY microsec
-;        DC      VIDEO+$000000+%0011011  ; Stop Integrate and sel inverting int.
-;        DC      CLK3+SW_DELAY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1H       ;SW->hi
-;        DC      CLK3+POST_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L   ;SW->lo
-;        DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
-;        DC      VIDEO+$000000+%0011011  ; StopIntegrator
-;        DC      VIDEO+DCRST_DELAY+%1110111      ; ADCLatch,NonInv  ;mF to do ADC sampeling bevore resetting
-END_SERIAL_READ_L
-
-; switch the two polarity bits (3rd and 4th from the right000xx00) in all VIDEO words
-SERIAL_READ_L1
-        DC      END_SERIAL_READ_L1-SERIAL_READ_L1-1
+SERIAL_READ_L_STAGE1
+        DC      END_SERIAL_READ_L_STAGE1-SERIAL_READ_L_STAGE1-1
         ;DC      VIDEO+$000000+%1110100  ; NonInv,DCRestore,StrtRstInt.
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;Reset_On
         DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h1->lo, Reset_off
@@ -317,10 +260,17 @@ SERIAL_READ_L1
         DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L ;h1->hi
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L ;h2->lo
         DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;h3->hi,Delay
-END_SERIAL_READ_L1
+END_SERIAL_READ_L_STAGE1
 
-;Skipper read routines
-PIT_SK_SERIAL_READ_LSUB
+;********************
+;This is the non-desctructive charge readout (NDCR) routine
+;for a skipper CCD.
+;This part just cycles the charge between SW, OG and SN.
+;This routine is common for L, R and LR since no serial register
+;clocks are operated.
+;********************
+
+PIT_SK_NDCR_SERIAL_READ
 	DC	END_PIT_SK_SERIAL_READ_LSUB-PIT_SK_SERIAL_READ_LSUB-1
                  
 	;Before the skipper cycle begines, we will reset the sense node once.
@@ -354,28 +304,55 @@ PIT_SK_SERIAL_READ_LSUB
 
 	;Move charge back to G1 by setting G1->Lo and G2->Lo
 	DC	CLK3+SW_DELAY+G1L+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH
-	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+DUMPGH+G2L ;Gate2 component of prev line
+	DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+G2L ;Gate2 component of prev line
 
 	;Move G2->high to reset cycle
-	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+DUMPGH+G2H ;Gate2 component of prev line
+	DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+G2H ;Gate2 component of prev line
 	DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+G1L
 	
 
 	; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime
-SXL2    DC      $00F000	
+SXA2    DC      $00F040	
 END_PIT_SK_SERIAL_READ_LSUB
 
+;*********************************
+;Stage 2 serial read will dump the charges on SW
+;and OG to the dump drain.
+;This routine is common for L, R and LR since no serial register
+;clocks are operated.
+;*********************************
 
-
-SERIAL_READ_L2
-	DC      END_SERIAL_READ_L2-SERIAL_READ_L2-1
+SERIAL_READ_CLRCHG_STAGE_2
+	DC      END_SERIAL_READ_CLRCHG_STAGE_2-SERIAL_READ_CLRCHG_STAGE_2-1
         ;We need to dump the charges here
 	DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1H+RH ;Dump->low
 	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGL
 	
 	DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L+RH ;Dump->high and gate 1 low
 	DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+G2H+DUMPGH
-END_SERIAL_READ_L2
+END_SERIAL_READ_CLRCHG_STAGE_2
+
+
+SERIAL_READ_L
+;        DC      END_SERIAL_READ_L-SERIAL_READ_L-1
+;        DC      VIDEO+$000000+%1110100  ; NonInv,DCRestore,StrtRstInt.
+;        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;Reset_On
+;        DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h1->lo, Reset_off
+;        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L ;h2->hi
+;        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L ;h3->lo
+;        DC      CLK3+S_DELAY+RL+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L ;h1->hi
+;        DC      CLK3+S_DELAY+RL+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L ;h2->lo
+;        DC      CLK3+PRE_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;h3->hi,Delay
+;SXL     DC      $00F000                 ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime
+;        DC      VIDEO+$000000+%1110111  ; StopDCRestore and StopResetIntegrator 
+;        DC      VIDEO+I_DELAY+%0000111  ; Integrate for I_DELAY microsec
+;        DC      VIDEO+$000000+%0011011  ; Stop Integrate and sel inverting int.
+;        DC      CLK3+SW_DELAY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1H       ;SW->hi
+;        DC      CLK3+POST_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L   ;SW->lo
+;        DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
+;        DC      VIDEO+$000000+%0011011  ; StopIntegrator
+;        DC      VIDEO+DCRST_DELAY+%1110111      ; ADCLatch,NonInv  ;mF to do ADC sampeling bevore resetting
+END_SERIAL_READ_L
 
 SERIAL_READ_R
         DC      END_SERIAL_READ_R-SERIAL_READ_R-1

@@ -1,105 +1,3 @@
-; Select which readouts to process
-;   'SOS'  Amplifier_name  
-;       Amplifier_name = '__L', '__R', '_LR'
-
-SEL_OS  MOVE    X:(R3)+,X0              ; Get amplifier(s) name
-        MOVE    X0,Y:<OS
-        JSR     <SELECT_OUTPUT_SOURCE
-        JMP     <FINISH1
-
-
-; A massive subroutine for setting all the addresses depending on the
-;   output source(s) selection and binning parameter.
-SELECT_OUTPUT_SOURCE
-
-; Set all the waveform addresses depending on which readout mode
-        MOVE    #'__L',A                ; LEFT Amplifier = readout #0
-        CMP     X0,A
-        JNE     <CMP_R
-        BCLR    #SPLIT_P,X:STATUS
-       	MOVE	#SERIAL_SKIP_L,X0
-	MOVE	X0,Y:SERIAL_SKIP
-	MOVE	#SERIAL_READ_L,X0
-	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F041,X0             ; Transmit channel 0   6/16/2011 was 00f000 no work __L new cable
-CMP_RR  MOVE    X0,Y:SXL
-        BCLR    #SPLIT_S,X:STATUS
-        JMP     <CMP_END
-
-CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
-        CMP     X0,A
-        JNE     <CMP_LR
-        BCLR    #SPLIT_P,X:STATUS
-       	MOVE	#SERIAL_SKIP_R,X0
-	MOVE	X0,Y:SERIAL_SKIP
-	MOVE	#SERIAL_READ_R,X0
-	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F000,X0             ; Transmit channel 1  6/16/2011 fix was f041 no work __R new cable
-CMP_LL  MOVE    X0,Y:SXR
-        BCLR    #SPLIT_S,X:STATUS
-        JMP     <CMP_END
-
-CMP_LR  MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
-        CMP     X0,A
-        JNE     <CMP_12
-        BCLR    #SPLIT_P,X:STATUS
-  	MOVE	#SERIAL_SKIP_LR,X0   ;added/changed 6/16/2011 r.a.
-	MOVE	X0,Y:SERIAL_SKIP     ; "      "     "  "  "   " " 
-	MOVE	#SERIAL_READ_LR,X0
-	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F040,X0             ; Transmit channel 0&1
-CMP_AR  MOVE    X0,Y:SXRL
-        BSET    #SPLIT_S,X:STATUS
-CMP_END MOVE    X0,Y:SXMIT
-        MOVE    #'DON',Y1
-        RTS
-
-CMP_12  MOVE    #'_12',A
-        CMP     X0,A
-        JNE     <CMP_21
-        BSET    #SPLIT_P,X:STATUS
-        MOVE    #$00F081,X0             ; Transmit channel 2&1
-        JMP     <CMP_LL
-
-CMP_21  MOVE    #'_21',A
-        CMP     X0,A
-        JNE     <CMP_2L
-        BSET    #SPLIT_P,X:STATUS
-        MOVE    #$00F081,X0             ; Transmit channel 2&1
-        JMP     <CMP_RR
-
-CMP_2L  MOVE    #'_2L',A
-        CMP     X0,A
-        JNE     <CMP_2U
-        BCLR    #SPLIT_P,X:STATUS
-        MOVE    #$00F082,X0             ; Transmit channel 2
-        JMP     <CMP_LL
-
-CMP_2U  MOVE    #'_2R',A
-        CMP     X0,A
-        JNE     <CMP_RL
-        BCLR    #SPLIT_P,X:STATUS
-        MOVE    #$00F0C3,X0             ; Transmit channel 3
-        JMP     <CMP_RR
-
-CMP_RL  MOVE    #'_RL',A
-        CMP     X0,A
-        JNE     <CMP_ALL
-        BCLR    #SPLIT_P,X:STATUS
-        MOVE    #$00F0C2,X0             ; Transmit channel 2&3
-        JMP     <CMP_AR
-
-CMP_ALL MOVE    #'ALL',A
-        CMP     X0,A
-        JNE     <CMP_ERROR
-        BSET    #SPLIT_P,X:STATUS
-        MOVE    #$00F0C0,X0             ; Transmit channel 0&1&2&3
-        JMP     <CMP_AR
-
-CMP_ERROR
-        MOVE    #'ERR',X0
-        RTS
-
 
 ;***********************   EL Shutter   *************************
 EL_SH   JSR     <OSHUT          ; open Timing board shutter
@@ -149,4 +47,35 @@ EP_SPL  DO Y:<EPER,EP_LP
 	NOP
 EP_LP   NOP
         JMP     <FINISH
+
+
+
+;*********************Removed from current_sk.wf**************
+;start binning waveforms
+CCD_RESET       ;Used for binning only
+        DC      SERIAL_CLOCK_L-CCD_RESET-1
+
+SERIAL_CLOCK_L  ;"NORMAL" clocking
+        DC      SERIAL_CLOCK_R-SERIAL_CLOCK_L-1
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;h3->lo,SW->lo,Reset_On
+        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+G1L ;h2->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+G1L ;h1->lo
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+G1L ;h3->hi
+        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+G1L ;h2->lo
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+G1L ;h1->hi
+        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+G1L ;Reset_Off+Delay
+
+SERIAL_CLOCK_R  ;"REVERSE" clocking
+        DC      SERIAL_CLOCK_LR-SERIAL_CLOCK_R-1
+
+SERIAL_CLOCK_LR ;"SPLIT" clocking
+        DC      VIDEO_PROCESS-SERIAL_CLOCK_LR-1
+
+VIDEO_PROCESS
+        DC      END_VIDEO-VIDEO_PROCESS-1
+SXMIT   DC      $00F000                 ; Transmit A/D data to host
+END_VIDEO
+
+;end binning waveforms
+
 	

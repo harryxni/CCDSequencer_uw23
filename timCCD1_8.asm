@@ -664,17 +664,87 @@ SELECT_OUTPUT_SOURCE
 ; Set all the waveform addresses depending on which readout mode
         MOVE    #'__L',A                ; LEFT Amplifier = readout #0
         CMP     X0,A
-        ;JNE     <CMP_R
+        JNE     <CMP_R
         BCLR    #SPLIT_P,X:STATUS
        	MOVE	#SERIAL_SKIP_L,X0
 	MOVE	X0,Y:SERIAL_SKIP
 	MOVE	#SERIAL_READ_L,X0
 	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F041,X0             ; Transmit channel 0   6/16/2011 was 00f000 no work __L new cable
-CMP_RR  MOVE    X0,Y:SXL2
+        MOVE    #$00F041,X0             ; Transmit channel 1 - our cable is flipped  (PM)
+CMP_RR  MOVE    X0,Y:SXA2
         BCLR    #SPLIT_S,X:STATUS
         JMP     <CMP_END
 
+CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
+        CMP     X0,A
+        JNE     <CMP_LR
+        BCLR    #SPLIT_P,X:STATUS
+       	MOVE	#SERIAL_SKIP_R,X0
+	MOVE	X0,Y:SERIAL_SKIP
+	MOVE	#SERIAL_READ_R,X0
+	MOVE	X0,Y:<SERIAL_READ
+        MOVE    #$00F000,X0             ; Transmit channel 0  - our cable is flipped (PM) 
+CMP_LL  MOVE    X0,Y:SXA2
+        BCLR    #SPLIT_S,X:STATUS
+        JMP     <CMP_END
+
+CMP_LR  MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
+        CMP     X0,A
+        JNE     <CMP_12
+        BCLR    #SPLIT_P,X:STATUS
+  	MOVE	#SERIAL_SKIP_LR,X0   
+	MOVE	X0,Y:SERIAL_SKIP        ;  
+	MOVE	#SERIAL_READ_LR,X0
+	MOVE	X0,Y:<SERIAL_READ
+        MOVE    #$00F040,X0             ; Transmit channel 0&1
+CMP_AR  MOVE    X0,Y:SXA2
+        BSET    #SPLIT_S,X:STATUS
 CMP_END MOVE    X0,Y:SXMIT
         MOVE    #'DON',Y1
+        RTS
+
+CMP_12  MOVE    #'_12',A
+        CMP     X0,A
+        JNE     <CMP_21
+        BSET    #SPLIT_P,X:STATUS
+        MOVE    #$00F081,X0             ; Transmit channel 2&1
+        JMP     <CMP_LL
+
+CMP_21  MOVE    #'_21',A
+        CMP     X0,A
+        JNE     <CMP_2L
+        BSET    #SPLIT_P,X:STATUS
+        MOVE    #$00F081,X0             ; Transmit channel 2&1
+        JMP     <CMP_RR
+
+CMP_2L  MOVE    #'_2L',A
+        CMP     X0,A
+        JNE     <CMP_2U
+        BCLR    #SPLIT_P,X:STATUS
+        MOVE    #$00F082,X0             ; Transmit channel 2
+        JMP     <CMP_LL
+
+CMP_2U  MOVE    #'_2R',A
+        CMP     X0,A
+        JNE     <CMP_RL
+        BCLR    #SPLIT_P,X:STATUS
+        MOVE    #$00F0C3,X0             ; Transmit channel 3
+        JMP     <CMP_RR
+
+CMP_RL  MOVE    #'_RL',A
+        CMP     X0,A
+        JNE     <CMP_ALL
+        BCLR    #SPLIT_P,X:STATUS
+        MOVE    #$00F0C2,X0             ; Transmit channel 2&3
+        JMP     <CMP_AR
+
+CMP_ALL MOVE    #'ALL',A
+        CMP     X0,A
+        JNE     <CMP_ERROR
+        BSET    #SPLIT_P,X:STATUS
+        MOVE    #$00F0C0,X0             ; Transmit channel 0&1&2&3
+        JMP     <CMP_AR
+
+CMP_ERROR
+        MOVE    #'ERR',X0
         RTS

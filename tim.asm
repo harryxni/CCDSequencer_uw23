@@ -27,7 +27,6 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 ; Keep the CCD idling when not reading out
 
 IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
-	
 	MOVE    #<SERIAL_IDLE_T,R0 	; Serial transfer on pixel
 	JSR     <CLOCK  		; Go to it
 
