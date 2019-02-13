@@ -1,50 +1,50 @@
-       COMMENT *
+;*******************************************************************************
+;This file is used to generate boot DSP code for the 250 MHz fiber optic
+;timing board using a DSP56303 as its main processor. It was
+;derived from Gen II files supplied by LBNL starting Jan. 2006.
+;Assume - 	ARC32 clock driver board
+;		ARC45 video processor board
+;		no ARC50 utility board
+;
+;File changed quite a bit for Skipper CCD by Pitam Mitra for DAMIC-M
+;Feb 8, 2019. pitamm@gmail.com
+;*******************************************************************************
 
-This file is used to generate boot DSP code for the 250 MHz fiber optic
-	timing board using a DSP56303 as its main processor. It was
-	derived from Gen II files supplied by LBNL starting Jan. 2006.
-	Assume - 	ARC32 clock driver board
-			ARC45 video processor board
-			no ARC50 utility board
-	*
-	PAGE    132     ; Printronix page width - 132 columns
+        PAGE    132     ; Printronix page width - 132 columns
 
 ; Include the boot and header files so addressing is easy
-	INCLUDE "timhdr.asm"
-	INCLUDE	"timboot.asm"
+        INCLUDE "timhdr.asm"
+        INCLUDE	"timboot.asm"
 
-	ORG	P:,P:
-; sg 2006-02-02 shouldn't the next line contain TIMREV5 (cf. timhdr.asm) ?!
-; CC      EQU     CCDVIDREV3B+TIMREV4+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT_SERIAL
-
+        ORG	P:,P:
 CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT_SERIAL
 
 
-
 ; Put number of words of application in P: for loading application from EEPROM
-	DC	TIMBOOT_X_MEMORY-@LCV(L)-1
+        DC	TIMBOOT_X_MEMORY-@LCV(L)-1
 
-; Keep the CCD idling when not reading out
+
+;*******************************************
+;* IDLE - This is the IDLE mode
+;* function to keep the CCD clocking
+;* when not reading charges
+;*******************************************
 
 IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
-	MOVE    #<SERIAL_IDLE_T,R0 	; Serial transfer on pixel
-	JSR     <CLOCK  		; Go to it
+        MOVE    #<SERIAL_IDLE_STAGE_1,R0 	; Move stage 1 waveforms to R0
+        JSR     <CLOCK  		; Clock Stage 1
 
-	;DO	Y:<PIT_SKREPEAT,PIT_SK
-	;	MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
-	;	JSR     <CLOCK  		; Go to it
-	;NOP
-;PIT_SK	NOP
+        DO	Y:<PIT_SKREPEAT,PIT_SK
+                MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	; Serial transfer on pixel
+                JSR     <CLOCK  		; Go to it
+        NOP
+PIT_SK	NOP
 
 	;MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
 	;JSR     <CLOCK  		; Go to it
 
-	MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
+        MOVE    #<SERIAL_READ_CLRCHG_STAGE_2,R0 	; Serial transfer on pixel
 	JSR     <CLOCK  		; Go to it
-
-	MOVE    #<SERIAL_IDLE_T2,R0 	; Serial transfer on pixel
-	JSR     <CLOCK  		; Go to it
-
 
 	MOVE	#COM_BUF,R3
 	JSR	<GET_RCV		; Check for FO or SSI commands
@@ -65,7 +65,6 @@ IDL1
 
 ; Parallel shift the image from the Imaging area into the Storage area
 ; Calculate some readout parameters
-;this is pasted in from leachemail\lbnl\2kx4k\tim.asm r.a. 3/21/2011
 RDCCD	CLR	A
 	JSET	#ST_SA,X:STATUS,SUB_IMG
 	MOVE	A1,Y:<NP_SKIP		; Zero these all out
@@ -144,16 +143,18 @@ L_SKP1
 
 ; Finally read some real pixels
 L_READ	DO	Y:<NS_READ,L_RD
-	MOVE	#<SERIAL_READ_L1,R0
+        MOVE	#<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	
-	DO	Y:<PIT_SKREPEAT,PIT_SK
-		MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
+        DO	Y:<PIT_SKREPEAT,PIT_SKR
+                MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	; Serial transfer on pixel
 		JSR     <CLOCK  		; Go to it
+                MOVE    #<SK_SEND_BUFFER,R0
+                JSR     <CLOCK
 	NOP
-PIT_SK	NOP
+PIT_SKR	NOP
 
-	MOVE	#<SERIAL_READ_L2,R0
+        MOVE	#<SERIAL_READ_CLRCHG_STAGE_2,R0
 	JSR     <CLOCK
 	
 	NOP
@@ -271,34 +272,8 @@ CONTINUE_READING	EQU	CONTINUE_READ 		; Address if reading out
 	ENDIF
 
 GAIN	DC	END_APPLICATON_Y_MEMORY-@LCV(L)-1
-; sg 2005-02-6 why are these numbers even in here? Shouldn't they come from the
-;              current.waveforms  file? 
-; r.a. 3/1/2011 note 2 self:  these are dsp variables names that are hard wired to 
-; dsp y memory locations via the org y:0, y:0 statement above so from the
-; outside (say excel) we can read (or set) the value of "GAIN" at location 0x400000
-; NSR is at 0x400001 and so on. some values are set via direct memory writes "commands" WRM
-; and some are set via "routines (which then go on to do more initing of
-; various hardware registers... somewhere.. (labels that are "jumped to" via the 3 letter
-; command jump table at the top... so SOS is the command for setting, left
-; right, or all ccd outputs and it is broken stuck to all in this source...
-; supposed to be settable from the gui but the jump table lable appears hacked out...
-; so SOS is supposed to go to asm code "SEL_OS" label but that's gone?
-;  roi is similarly diminished in this.  roi commands are sss and ssp and are not
-; even in this jump table.  (hacked to death)  r.a. 
-;  so for example "ALL" could be sent down or '__L' for left ect.
-; this is locked at "ALL" (could do a WRM, write memory to change it but the
-; hardware would not be set appropriately so it would still be at all...
-;   NSR, NPR are just
-; DSP memory values that the readout code will look at later (when "SEX" is sent
-; down as a command...) and use as a reference for the loops in the (sex) readout routines
-; controls how many times the parallel and/or serial readout tables are "played" to
-; the timing (output arc ??) board.
-;NSR     DC      560   	 	; Number Serial Read, prescan + image + bias
-;NPR     DC      512     	; Number Parallel Read
-;GAINRA  DC      0               ; can not add new vars here or image will not complete being sent. r.a.
 NSR     DC      10   	 	; Number Serial Read, prescan + image + bias
 NPR     DC      10	     	; Number Parallel Read
-;NS_CLR	DC      0	  	; To clear the serial register
 NSCLR   DC      NS_CLR             ;see waveform file 4 this one and next
 NPCLR   DC      NP_CLR    	; To clear the parallel register
 NSBIN   DC      1       	; Serial binning parameter
@@ -316,9 +291,9 @@ OS	DC	'__L'		; Output Source selection (1side 9/25/07 JE)
 ;SERIAL_READ	DC	SERIAL_READ_LR	; Address of serial reading waveforms  (2sides)
 ;SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms (2sides)
 
-SERIAL_SKIP 	DC	SERIAL_SKIP_L	; Serial skipping waveforms was L
-SERIAL_READ	DC	SERIAL_READ_L	; Address of serial reading waveforms (1side 9/25/07 JE) was L
-SERIAL_CLEAR	DC	SERIAL_SKIP_L	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
+SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
+SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
+SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
 
 
 
@@ -331,20 +306,16 @@ NSREAD	DC	0	; Number of columns in subimage read
 NPREAD	DC	0	; Number of rows in subimage read
 
 
-
 ; Definitions for CCD HV erase
 TIME1   DC      1000            ; Erase time
 TIME2   DC      500             ; Delay for Vsub ramp-up
 ; Timing board shutter
 CL_H    DC      100             ; El Shutter msec
+;Dubious shit
+GAINRA  DC      0
+EPER    DC      0
 
-; Pocket pumping parameters
-PK_MULT DC      10      ; Multiplicater for Number of pumping  cycles
-PK_SHF  DC      20      ; Number of lines to be shifted every cycle
-PK_CY   DC      100     ; Number of pumping cycles
-; EPER slit width. running pocket pumping with non zero EPER value will
-EPER    DC      0       ; activate EPER code instead of pumping code.
-GAINRA  DC      0       ; try it at the end this way.. sigh. r.a. 4/21/2011
+
 
 PIT_SKREPEAT DC 8
 

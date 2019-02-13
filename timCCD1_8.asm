@@ -668,7 +668,7 @@ SELECT_OUTPUT_SOURCE
         BCLR    #SPLIT_P,X:STATUS
        	MOVE	#SERIAL_SKIP_L,X0
 	MOVE	X0,Y:SERIAL_SKIP
-	MOVE	#SERIAL_READ_L,X0
+        MOVE	#SERIAL_READ_L_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
         MOVE    #$00F041,X0             ; Transmit channel 1 - our cable is flipped  (PM)
 CMP_RR  MOVE    X0,Y:SXA2
@@ -681,7 +681,7 @@ CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         BCLR    #SPLIT_P,X:STATUS
        	MOVE	#SERIAL_SKIP_R,X0
 	MOVE	X0,Y:SERIAL_SKIP
-	MOVE	#SERIAL_READ_R,X0
+        MOVE	#SERIAL_READ_R_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
         MOVE    #$00F000,X0             ; Transmit channel 0  - our cable is flipped (PM) 
 CMP_LL  MOVE    X0,Y:SXA2
@@ -694,7 +694,7 @@ CMP_LR  MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
         BCLR    #SPLIT_P,X:STATUS
   	MOVE	#SERIAL_SKIP_LR,X0   
 	MOVE	X0,Y:SERIAL_SKIP        ;  
-	MOVE	#SERIAL_READ_LR,X0
+        MOVE	#SERIAL_READ_LR_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
         MOVE    #$00F040,X0             ; Transmit channel 0&1
 CMP_AR  MOVE    X0,Y:SXA2
