@@ -150,7 +150,6 @@ RH      EQU     $300	; $300 = pin 34 (0x100) + pin 35 (0x200)
 ;
 PARALLEL
         DC      PARALLEL_CLEAR-PARALLEL-1
-        DC      CLK3+$000000+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL ;SW->lo
         ;Starting point : V1H-V2L-V3H along with TH+OUTGH+DUMPGH
         DC      CLK2+P_DELAY+V1H+V2L+V3L+TL+OUTGH+DUMPGH      ; 3 low
         DC      CLK2+P_DELAY+V1H+V2H+V3L+TL+OUTGH+DUMPGH      ; 2 hi
@@ -161,7 +160,6 @@ PARALLEL
 
 PARALLEL_CLEAR
         DC      P_PARAL-PARALLEL_CLEAR-1
-        DC      CLK3+$000000+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL ;SW->lo
         DC      CLK2+P_DELAY+V1H+V2L+V3H+TL+OUTGH+DUMPGH
         DC      CLK2+P_DELAY+V1H+V2L+V3L+TL+OUTGH+DUMPGH
         DC      CLK2+P_DELAY+V1H+V2H+V3L+TL+OUTGH+DUMPGH
@@ -187,7 +185,6 @@ P_PARAL_INV
         DC      CLK2+P_DELAY+V1H+V2L+V3L+TH+OUTGH+DUMPGH      ; shut TG
 
 P_EPER  DC      END_P_EPER-P_EPER-1
-        DC      CLK3+$000000+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL ;SW->lo
         DC      CLK2+P_DELAY+V1H+V2L+V3H+TL+OUTGH+DUMPGH      ; or V clocking
         DC      CLK2+P_DELAY+V1L+V2L+V3H+TL+OUTGH+DUMPGH      ; upwards
         DC      CLK2+P_DELAY+V1L+V2H+V3H+TL+OUTGH+DUMPGH
@@ -221,31 +218,16 @@ SERIAL_IDLE_STAGE_1
         DC      END_SERIAL_IDLE_STAGE_1-SERIAL_IDLE_STAGE_1-1
         ;DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt.
 
-
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+OUTGH ;SW->lo,Reset_On
-        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL+OUTGH ;h1->lo
-        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL+OUTGH ;h2->hi
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+OUTGH ;
+        DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL+OUTGH ;h1->lo, Well->lo, reset->lo
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL+OUTGH ;h2->hi, reset->hi
         DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL+OUTGH ;h3->lo
         DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL+OUTGH ;h1->hi
-
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+WL+OUTGH ;h2->lo
-        ;DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+OUTGH ;h3->hi,Delay
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+OUTGH ;h3->hi,Delay
         DC      CLK3+$000000+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+OUTGH ;dummy for transmit delay
 	
 END_SERIAL_IDLE_STAGE_1
-
-SERIAL_IDLE_B
-	DC      END_SERIAL_IDLE_B-SERIAL_IDLE_B-1
-        DC      VIDEO+$000000+%1110111  ; StopDCRestore and StopResetIntegrator 
-        DC      VIDEO+I_DELAY+%0000111  ; Integrate for I_DELAY microsec
-        DC      VIDEO+$000000+%0011011  ; Stop Integrate and sel inverting int.
-        DC      CLK3+SW_DELAY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+OUTGH   ;WH ;SW->hi
-        DC      CLK3+POST_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+OUTGH ;WL ;SW->lo
-        DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
-        DC      VIDEO+$000000+%0011011  ; StopIntegrator
-        DC      VIDEO+DCRST_DELAY+%1110111      ; ADCLatch,NonInv  ;mF to do ADC sampling before resetting
-END_SERIAL_IDLE_B
 
 
 ;These are some random routines that need to be defined because the symbols are defined somewhere else.
@@ -278,13 +260,6 @@ PIT_SK_NDCR_SERIAL_READ
         ;DC      VIDEO+S_DELAY+%1110100
 
 
-	;Before the skipper cycle begines, we will reset the sense node once.
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
-	;Gate2 component of prev line not needed since Gate 2 doesnt change.
- 
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
-
-
 
 	;Measure the pedestal	
 	DC      VIDEO+$000000+%1110111  ; (1) -> StopDCRestore and (0) -> StopResetIntegrator 
@@ -303,14 +278,15 @@ PIT_SK_NDCR_SERIAL_READ
 	;(5) -> On low to high start ADC sample/hold and conversion 
         DC      VIDEO+DCRST_DELAY+%1110111      
 
-        ;Move charge back to W by setting W->Lo and OUTG->Lo
-        DC	CLK3+SW_DELAY+WL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Gate2 component of prev line
-
-        ;Move OUTG->high to reset cycle
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGH ;Gate2 component of prev line
+        ;Move charge back to SW by setting SW->Lo and OUTG->Lo
         DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
-	
+        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
+        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGH ;Move OUTG->high to keep charges in SW.
+
+        ;Before the skipper cycle begins again, we will reset the sense node once.
+        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
+        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
+
 
         ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime - test moving this elsewhere
         ;SXA2    DC      $00F040
@@ -338,11 +314,14 @@ END_SK_SEND_BUFFER
 SERIAL_READ_CLRCHG_STAGE_2
 	DC      END_SERIAL_READ_CLRCHG_STAGE_2-SERIAL_READ_CLRCHG_STAGE_2-1
         ;We need to dump the charges here
-        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;Dump->low
-        DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+OUTGH+DUMPGL
-	
-        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Dump->high
-        DC	CLK2+SW_DELAY+V1H+V2L+V3L+TH+OUTGH+DUMPGH
+        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;SW->hi
+        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGL ;Dump->low
+        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGH ;Dump->high
+
+        ;Note: A reset happens after the last ops.
+        ;Another one will happoen before first ops. We dont need a reset here.
+        ;DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;reset->hi
+
 END_SERIAL_READ_CLRCHG_STAGE_2
 
 
@@ -357,37 +336,37 @@ END_SERIAL_READ_CLRCHG_STAGE_2
 SERIAL_READ_L_STAGE1
         DC      END_SERIAL_READ_L_STAGE1-SERIAL_READ_L_STAGE1-1
         ;DC      VIDEO+$000000+%1110100  ; NonInv,DCRestore,StrtRstInt - line probably not needed here
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL       ;        Reset_On
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH       ;        Reset_On
         DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL       ;h1->lo, Reset_off
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL       ;h2->hi
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h3->lo
-        DC      CLK3+S_DELAY+RL+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL       ;h1->hi
-        DC      CLK3+S_DELAY+RL+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+WL       ;h2->lo
-        DC      CLK3+PRE_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h3->hi, Delay
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL       ;h2->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h3->lo
+        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL       ;h1->hi
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+WL       ;h2->lo
+        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h3->hi, Delay
 END_SERIAL_READ_L_STAGE1
 
 SERIAL_READ_R_STAGE1
         DC      END_SERIAL_READ_R_STAGE1-SERIAL_READ_R_STAGE1-1
         ;DC      VIDEO+$000000+%1110100  ; NonInv,DCRestore,StrtRstInt. - line probably not needed here.
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL       ;        Reset_On, SW->lo
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH       ;        Reset_On, SW->lo
         DC      CLK3+S_DELAY+RL+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+WL       ;h3->lo
-        DC      CLK3+S_DELAY+RL+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL       ;h2->hi
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h1->lo
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL       ;h3->hi
-        DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL       ;h2->lo
-        DC      CLK3+PRE_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h1->hi, Reset_Off+Delay
+        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL       ;h2->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h1->lo
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL       ;h3->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL       ;h2->lo
+        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h1->hi, Reset_Off+Delay
 END_SERIAL_READ_R_STAGE1
 
 SERIAL_READ_LR_STAGE1
         DC      END_SERIAL_READ_LR_STAGE1-SERIAL_READ_LR_STAGE1-1
         ;DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt. - line probably not needed here.
-        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL           ;                   SW->lo,Reset_On
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH           ;                   SW->lo,Reset_On
         DC      CLK3+S_DELAY+RL+HU1L+HU2L+HU3H+HL1H+HL2L+HL3L+WL           ;HU1->lo, HL3->lo
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3H+HL1H+HL2H+HL3L+WL           ;Hx2->hi
-        DC      CLK3+S_DELAY+RL+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL           ;HU3->lo, HL1->Lo
-        DC      CLK3+S_DELAY+RL+HU1H+HU2H+HU3L+HL1L+HL2H+HL3H+WL           ;HU1->hi, HL3->hi
-        DC      CLK3+S_DELAY+RL+HU1H+HU2L+HU3L+HL1L+HL2L+HL3H+WL           ;Hx2->lo
-        DC      CLK3+PRE_SET_DLY+RL+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL       ;HU3->hi, HL1->hi,  Reset_Off+Delay
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1H+HL2H+HL3L+WL           ;Hx2->hi
+        DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL           ;HU3->lo, HL1->Lo
+        DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1L+HL2H+HL3H+WL           ;HU1->hi, HL3->hi
+        DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1L+HL2L+HL3H+WL           ;Hx2->lo
+        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL       ;HU3->hi, HL1->hi,  Reset_Off+Delay
 END_SERIAL_READ_LR_STAGE1
 
 

@@ -31,7 +31,7 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 ;*******************************************
 
 IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
-        MOVE    #<SERIAL_IDLE_STAGE_1,R0 	; Move stage 1 waveforms to R0
+        MOVE    #<SERIAL_READ_LR_STAGE1,R0 	; Move stage 1 waveforms to R0
         JSR     <CLOCK  		; Clock Stage 1
 
         DO	Y:<PIT_SKREPEAT,PIT_SK
