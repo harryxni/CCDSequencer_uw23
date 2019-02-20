@@ -250,7 +250,7 @@ PIT_SK_NDCR_SERIAL_READ
         DC      VIDEO+$000000+%0011011  ; (4) -> Stop Integration and (3,2)-> sel inverting int.
 	
 	
-        ;Move charge to Sense node by W->hi OUTG->Hi
+        ;Move charge to Sense node by SW->hi OUTG->Hi
         DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
 
 

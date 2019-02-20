@@ -7,7 +7,7 @@
 ;		no ARC50 utility board
 ;
 ;File changed quite a bit for Skipper CCD by Pitam Mitra for DAMIC-M
-;Feb 8, 2019. pitamm@gmail.com
+;Feb 8, 2019. pitamm@uw.edu
 ;*******************************************************************************
 
         PAGE    132     ; Printronix page width - 132 columns
@@ -31,7 +31,7 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 ;*******************************************
 
 IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
-        MOVE    #<SERIAL_READ,R0 	; Move stage 1 waveforms to R0
+        MOVE    Y:<SERIAL_READ,R0 	; To be able to set SERIAL_READ dynamically, it needs to be assigned Y:<SERIAL_READ
         JSR     <CLOCK  		; Clock Stage 1
 
         DO	Y:<PIT_SKREPEAT,PIT_SK
@@ -147,10 +147,10 @@ L_READ	DO	Y:<NS_READ,L_RD
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	
         DO	Y:<PIT_SKREPEAT,PIT_SKR
-                MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	; Serial transfer on pixel
-		JSR     <CLOCK  		; Go to it
-                MOVE    #<SK_SEND_BUFFER,R0
-                JSR     <CLOCK
+        MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	;
+        JSR     <CLOCK                          ; Write the clock waveforms to the output - i.e. run the clock
+        MOVE    #<SK_SEND_BUFFER,R0
+        JSR     <CLOCK
 	NOP
 PIT_SKR	NOP
 
