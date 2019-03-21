@@ -152,7 +152,7 @@ L_SKP1
 
 ; Finally read some real pixels
 L_READ	DO	Y:<NS_READ,L_RD
-        MOVE	Y:<SERIAL_READ,R0
+        MOVE	#<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	
         DO	Y:<PIT_SKREPEAT,PIT_SKR
