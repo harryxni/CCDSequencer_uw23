@@ -45,9 +45,6 @@ IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
         NOP
 PIT_SK	NOP
 
-	;MOVE    #<PIT_SK_SERIAL_READ_LSUB,R0 	; Serial transfer on pixel
-	;JSR     <CLOCK  		; Go to it
-
         MOVE    #<SERIAL_READ_CLRCHG_STAGE_2,R0 	; Serial transfer on pixel
 	JSR     <CLOCK  		; Go to it
         JMP     <CTN
@@ -105,7 +102,7 @@ WT_CLK
 	JEQ	<CLR_SR
 	DO      Y:<NP_SKIP,L_PSKP
 	DO	Y:<NPBIN,L_PSKIP
-	MOVE    #<PARALLEL,R0
+        MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
         NOP
 L_PSKIP	NOP
@@ -123,7 +120,7 @@ L_CLRSR		                     	; Do loop restriction
 
 ; Exercise the parallel clocks, including binning if needed
 	DO	Y:<NPBIN,L_PBIN
-	MOVE    #<PARALLEL,R0
+        MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
 	NOP
 L_PBIN
@@ -155,6 +152,11 @@ L_READ	DO	Y:<NS_READ,L_RD
         MOVE	#<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	
+        MOVE	Y:<AMPLTYPE,X0
+        MOVE    #$0,A
+        CMP	X0,A
+        BNE     <DESR
+
         DO	Y:<PIT_SKREPEAT,PIT_SKR
         MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	;
         JSR     <CLOCK                          ; Write the clock waveforms to the output - i.e. run the clock
@@ -165,12 +167,18 @@ PIT_SKR	NOP
 
         MOVE	#<SERIAL_READ_CLRCHG_STAGE_2,R0
 	JSR     <CLOCK
+        JMP     <CTNR
+
+DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
+        JSR     <CLOCK
+        MOVE    #<SK_SEND_BUFFER,R0
+        JSR     <CLOCK
 	
-	NOP
+CTNR	NOP
 L_RD
 
 ; Skip over NS_SKP2 columns if needed for subimage readout
-	MOVE	Y:<NS_SKP2,A		; Number of columns to skip
+        MOVE	Y:<NS_SKP2,A		; Number of columns to skip
 	TST	A
 	JLE	<L_BIAS
 	DO	Y:<NS_SKP2,L_SKP2
@@ -263,8 +271,7 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 ; New LBNL commands
         DC      'ERS',ERASE             ; Persistent Image Erase        
         DC      'HLD',HOLD_CLK          ; Stop clocking during erase    
-        ;DC      'SPP',SET_PK_PAR        ; Set pumping and EL_shutter parameters 
-        ;DC      'PMP',POCKET            ; Start pocket pumping  
+
         
 END_APPLICATON_COMMAND_TABLE	EQU	@LCV(L)
 
