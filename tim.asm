@@ -34,6 +34,11 @@ IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
         MOVE    Y:<SERIAL_READ,R0 	; To be able to set SERIAL_READ dynamically, it needs to be assigned Y:<SERIAL_READ
         JSR     <CLOCK  		; Clock Stage 1
 
+        MOVE	Y:<AMPLTYPE,X0
+        MOVE    #$0,A
+        CMP	X0,A
+        BNE     <DES
+
         DO	Y:<PIT_SKREPEAT,PIT_SK
                 MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	; Serial transfer on pixel
                 JSR     <CLOCK  		; Go to it
@@ -45,15 +50,19 @@ PIT_SK	NOP
 
         MOVE    #<SERIAL_READ_CLRCHG_STAGE_2,R0 	; Serial transfer on pixel
 	JSR     <CLOCK  		; Go to it
+        JMP     <CTN
 
-	MOVE	#COM_BUF,R3
+DES     MOVE    #PIT_DESI_SERIAL_READ,R0
+        JSR     <CLOCK
+
+CTN	MOVE	#COM_BUF,R3
 	JSR	<GET_RCV		; Check for FO or SSI commands
 	JCC	<NO_COM			; Continue IDLE if no commands received
 	ENDDO
 	JMP     <PRC_RCV		; Go process header and command
 NO_COM	NOP
 IDL1
-	MOVE    #<PARALLEL,R0		; Address of parallel clocking waveform
+        MOVE    Y:<PARL,R0		; Address of parallel clocking waveform
 	JSR     <CLOCK  		; Go clock out the CCD charge
 	JMP     <IDLE	
 
@@ -246,6 +255,10 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'SSS',SET_SUBARRAY_SIZES
 	DC	'SSP',SET_SUBARRAY_POSITIONS
 	DC	'RCC',READ_CONTROLLER_CONFIGURATION 
+        DC	'SAT',SEL_AT
+        DC      'VDR',SEL_VDIR
+        DC      'HDR',HCLK_DRXN
+        DC      'CIT',CHG_IDL
 
 ; New LBNL commands
         DC      'ERS',ERASE             ; Persistent Image Erase        
@@ -283,7 +296,8 @@ SH_DEL	DC	10		; Delay in milliseconds between shutter closing
 				;   and image readout
 CONFIG	DC	CC		; Controller configuration
 NS_READ DC      0               ; brought in for roi r.a. 3/21/2011
-OS	DC	'__L'		; Output Source selection (1side 9/25/07 JE) 
+OS	DC	'__L'		; Output Source selection (1side 9/25/07 JE)
+PDIR    DC      0
 
 
 
@@ -294,8 +308,8 @@ OS	DC	'__L'		; Output Source selection (1side 9/25/07 JE)
 SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
 SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
 SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
-
-
+PARL    	DC	PARALLEL
+HSEL            DC      '_LR'           ;Direction of H-clocks
 
 ; These parameters are set in "timCCDmisc.asm"
 NP_SKIP	DC	0	; Number of rows to skip
@@ -318,6 +332,7 @@ EPER    DC      0
 
 
 PIT_SKREPEAT DC 8
+AMPLTYPE    DC  0
 
 
 

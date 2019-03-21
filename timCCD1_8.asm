@@ -123,7 +123,7 @@ CLEAR	JSR	<CLR_CCD
 ; Default clearing routine with serial clocks inactive
 ; Fast clear image before each exposure, executed as a subroutine
 CLR_CCD DO      Y:<NPCLR,LPCLR          ; Loop over number of lines in image
-        MOVE    #PARALLEL_CLEAR,R0      ; Address of parallel transfer waveform
+        MOVE    #PARALLEL,R0      ; Address of parallel transfer waveform
         JSR     <CLOCK                  ; Go clock out the CCD charge
         NOP                             ; Do loop restriction
 LPCLR
@@ -213,6 +213,10 @@ SET_SKIPPER_REPEAT
 	MOVE	X:(R3)+,X0
 	MOVE	X0,Y:PIT_SKREPEAT
 	JMP	<FINISH
+
+SEL_AT  MOVE    X:(R3)+,X0
+        MOVE    X0,Y:AMPLTYPE
+        JMP     <FINISH
 
 ; Read the time remaining until the exposure ends
 READ_EXPOSURE_TIME
@@ -646,6 +650,90 @@ LNG_DLY DO      #4050,LNGDLY
         NOP
 LNGDLY
         RTS
+
+SEL_VDIR
+        MOVE    X:(R3)+,X0
+        MOVE    X0,Y:<OS
+        MOVE    #$0,A
+        CMP     X0,A
+        JNE     <VCLK_I
+        MOVE	#PARALLEL,X0
+        MOVE	X0,Y:PARL
+        JMP     <FINISH
+VCLK_I  MOVE    #PARALLEL_INV,X0
+        MOVE	X0,Y:PARL
+        JMP     <FINISH
+
+;;;;;;;;;;;;;;;;
+;Select H-Clock directions
+
+HCLK_DRXN
+        MOVE    X:(R3)+,X0              ; Get amplifier(s) name
+        MOVE    X0,Y:<HSEL
+        MOVE    #'__L',A                ; LEFT Amplifier = readout #0
+        CMP     X0,A
+        JNE     <HCMP_R
+        MOVE	#SERIAL_SKIP_L,X0
+        MOVE	X0,Y:SERIAL_SKIP
+        MOVE	#SERIAL_READ_L_STAGE1,X0
+        MOVE	X0,Y:<SERIAL_READ
+        JMP     <HMP_END
+HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
+        CMP     X0,A
+        JNE     <HCMP_LR
+        MOVE	#SERIAL_SKIP_R,X0
+        MOVE	X0,Y:SERIAL_SKIP
+        MOVE	#SERIAL_READ_R_STAGE1,X0
+        MOVE	X0,Y:<SERIAL_READ
+        JMP     <HMP_END
+HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
+        CMP     X0,A
+        JNE     <HMP_ERROR
+        MOVE	#SERIAL_SKIP_LR,X0
+        MOVE	X0,Y:SERIAL_SKIP        ;
+        MOVE	#SERIAL_READ_LR_STAGE1,X0
+        MOVE	X0,Y:<SERIAL_READ
+        JMP     <HMP_END
+HMP_ERROR
+        MOVE    #'ERR',X0
+        JMP     <FINISH1
+HMP_END
+        MOVE    #'DON',Y1
+        JMP     <FINISH1
+
+;;;;;;;;;;;;;;;;;;
+;IDELAY Changer
+
+CHG_IDL MOVE    X:(R3)+,X0
+        MOVE	Y:DLY0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DLY0
+
+        MOVE	Y:DLY1,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DLY1
+
+	MOVE	Y:DLY2,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DLY2
+
+	MOVE	Y:DLY3,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DLY3
+
+        JMP     <FINISH
+
+;;;;;;;;;;;;;;;;;;
+
+
 
 ; Select which readouts to process
 ;   'SOS'  Amplifier_name  

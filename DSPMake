@@ -13,7 +13,7 @@
 
 DOWNLOAD="HOST"
 WAVEFORM_FILE="$1.waveforms"
-DST_FILE="pit_skipper_$1"
+DST_FILE="firmware_$1"
 #DST_FILE=$1
 
 
