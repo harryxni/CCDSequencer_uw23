@@ -78,8 +78,11 @@ RDCCD	CLR	A
 	MOVE	A1,Y:<NS_SKP2
 	NOP
 	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns
-	;ASR	#3,A,A                    ; 3 byte shift or division by 8 for a skipper seq of 8	
-	NOP                             ; else not for roi for __L or __R
+;If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers
+;each reading half the number of pixels.
+	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
+        ASR     A                       ; Split in 2 
+	NOP                             ; 
 	MOVE	A,Y:<NS_READ		; Number of columns in each subimage
 	JMP	<WT_CLK
 
@@ -88,6 +91,8 @@ SUB_IMG	MOVE	Y:<NSREAD,A
 ; !!!	ASR	A			; Effectively split serial since there
 	NOP				;   are two CCDs
 	MOVE	A,Y:<NS_READ	; Number of columns in each subimage
+
+
 
 ; Start the loop for parallel shifting desired number of lines
 WT_CLK
@@ -149,7 +154,7 @@ L_SKP1
 
 ; Finally read some real pixels
 L_READ	DO	Y:<NS_READ,L_RD
-        MOVE	#<SERIAL_READ,R0
+        MOVE	Y:<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	
         MOVE	Y:<AMPLTYPE,X0
@@ -158,23 +163,24 @@ L_READ	DO	Y:<NS_READ,L_RD
         BNE     <DESR
 
         DO	Y:<PIT_SKREPEAT,PIT_SKR
-        MOVE    #<PIT_SK_NDCR_SERIAL_READ,R0 	;
+        MOVE    #PIT_SK_NDCR_SERIAL_READ,R0 	;
         JSR     <CLOCK                          ; Write the clock waveforms to the output - i.e. run the clock
-        MOVE    #<SK_SEND_BUFFER,R0
+        MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
 	NOP
 PIT_SKR	NOP
 
-        MOVE	#<SERIAL_READ_CLRCHG_STAGE_2,R0
+        MOVE	#SERIAL_READ_CLRCHG_STAGE_2,R0
 	JSR     <CLOCK
         JMP     <CTNR
 
 DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
-        MOVE    #<SK_SEND_BUFFER,R0
+        MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
 	
-CTNR	NOP
+CTNR	
+	NOP
 L_RD
 
 ; Skip over NS_SKP2 columns if needed for subimage readout
@@ -315,7 +321,7 @@ PDIR    DC      0
 SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
 SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
 SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
-PARL    	DC	PARALLEL
+PARL    	DC	PARALLEL_INV
 HSEL            DC      '_LR'           ;Direction of H-clocks
 
 ; These parameters are set in "timCCDmisc.asm"

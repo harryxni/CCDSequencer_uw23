@@ -658,11 +658,13 @@ SEL_VDIR
         CMP     X0,A
         JNE     <VCLK_I
         MOVE	#PARALLEL,X0
-        MOVE	X0,Y:PARL
-        JMP     <FINISH
+        MOVE	X0,Y:<PARL
+	MOVE    #'DON',Y1
+        JMP     <FINISH1
 VCLK_I  MOVE    #PARALLEL_INV,X0
-        MOVE	X0,Y:PARL
-        JMP     <FINISH
+        MOVE	X0,Y:<PARL
+	MOVE    #'DON',Y1
+        JMP     <FINISH1
 
 ;;;;;;;;;;;;;;;;
 ;Select H-Clock directions
@@ -677,6 +679,7 @@ HCLK_DRXN
         MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_L_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
+        BCLR    #SPLIT_S,X:STATUS
         JMP     <HMP_END
 HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         CMP     X0,A
@@ -685,6 +688,7 @@ HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_R_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
+        BCLR    #SPLIT_S,X:STATUS
         JMP     <HMP_END
 HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
         CMP     X0,A
@@ -693,6 +697,7 @@ HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
         MOVE	X0,Y:SERIAL_SKIP        ;
         MOVE	#SERIAL_READ_LR_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
+        BSET    #SPLIT_S,X:STATUS
         JMP     <HMP_END
 HMP_ERROR
         MOVE    #'ERR',X0
@@ -758,7 +763,7 @@ SELECT_OUTPUT_SOURCE
 	MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_L_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F041,X0             ; Transmit channel 1 - our cable is flipped  (PM)
+        MOVE    #$00F000,X0             ; Transmit channel 1 - our cable is flipped  (PM)
 CMP_RR  MOVE    X0,Y:SXA2
         BCLR    #SPLIT_S,X:STATUS
         JMP     <CMP_END
@@ -771,7 +776,7 @@ CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
 	MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_R_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F000,X0             ; Transmit channel 0  - our cable is flipped (PM) 
+        MOVE    #$00F041,X0             ; Transmit channel 0  - our cable is flipped (PM) 
 CMP_LL  MOVE    X0,Y:SXA2
         BCLR    #SPLIT_S,X:STATUS
         JMP     <CMP_END

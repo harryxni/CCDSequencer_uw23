@@ -46,6 +46,7 @@ R_DELAY         EQU     $0C0000 ; Serial register transfer delay
 ;Serial register skipping and summing well delays.
 S_DELAY         EQU     $060000 ; Serial register skipping delay
 SW_DELAY        EQU     $0C0000 ; Sum_well  clock delay 
+VE_DELAY	EQU	$190000
 
 ;98 KHz clocking wavefors
 PRE_SET_DLY     EQU     $0C0000 ;
@@ -217,7 +218,7 @@ PIT_SK_NDCR_SERIAL_READ
         ;Maybe: add wait time S_DELAY to hold this reset state.
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
-        ;DC      VIDEO+S_DELAY+%1110100
+        ;DC      VIDEO+VE_DELAY+%1110100
 
 
 
@@ -266,17 +267,15 @@ END_PIT_SK_NDCR_SERIAL_READ
 PIT_DESI_SERIAL_READ
         DC	END_PIT_DESI_SERIAL_READ-PIT_DESI_SERIAL_READ-1
 
-
         ;Prepare the ADC for sampling.
         ;Reset integrator
         ;Input video signal to ground clamp
         ;Non-inverting mode
-        DC      VIDEO+$000000+%1110100
+        ;DC      VIDEO+$000000+%1110100
         ;Maybe: add wait time S_DELAY to hold this reset state.
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
-        ;DC      VIDEO+S_DELAY+%1110100
-
+        ;DC      VIDEO+VE_DELAY+%1110100
 
 
         ;Measure the pedestal
@@ -288,7 +287,7 @@ DLY2    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
 
         ;Move charge to Sense node by SW->hi and then SW->lo, in a pulse mode sequence
         DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
-        DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+        DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
 
 
         ;Read the signal, using inverting amp right over the measured value of the pedestal
@@ -299,15 +298,17 @@ DLY3    DC      VIDEO+%0001011
         ;(5) -> On low to high start ADC sample/hold and conversion
         DC      VIDEO+DCRST_DELAY+%1110111
 
-        ;Since in a dESI amplifier we do not send the charge back to the SW,
-        ;we can flush the reset here.
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
+	;Since in a dESI amplifier we do not send the charge back to the SW,
+        ;we dont have to do a reset. That happens with the H-clock movements anyways.
+        ;DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
+        ;DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
 
 
         ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime - test moving this elsewhere
-        ;SXA2    DC      $00F040
+	;SXA2	DC      $00F040
 END_PIT_DESI_SERIAL_READ
+
+
 
 
 ;*********************************
@@ -319,6 +320,7 @@ END_PIT_DESI_SERIAL_READ
 SK_SEND_BUFFER
         DC	END_SK_SEND_BUFFER-SK_SEND_BUFFER-1
 SXA2    DC      $00F040
+        DC      VIDEO+VE_DELAY+%1110100
 END_SK_SEND_BUFFER
 
 
@@ -377,7 +379,8 @@ END_SERIAL_READ_R_STAGE1
 
 SERIAL_READ_LR_STAGE1
         DC      END_SERIAL_READ_LR_STAGE1-SERIAL_READ_LR_STAGE1-1
-        ;DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt. - line probably not needed here.
+	;DC      VIDEO+$000000+%1110100
+        DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt. - line probably not needed here.
         DC      CLK3+S_DELAY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL           ;                   SW->lo
         DC      CLK3+S_DELAY+RL+HL1L+HL2L+HL3H+HU1H+HU2L+HU3L+WL           ;HL1->lo, HU3->lo  ,reset on
         DC      CLK3+S_DELAY+RH+HL1L+HL2H+HL3H+HU1H+HU2H+HU3L+WL           ;Hx2->hi           ,reset off
