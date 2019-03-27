@@ -123,7 +123,7 @@ CLEAR	JSR	<CLR_CCD
 ; Default clearing routine with serial clocks inactive
 ; Fast clear image before each exposure, executed as a subroutine
 CLR_CCD DO      Y:<NPCLR,LPCLR          ; Loop over number of lines in image
-        MOVE    #PARALLEL,R0      ; Address of parallel transfer waveform
+        MOVE    Y:<PARL,R0	        ; Address of parallel transfer waveform
         JSR     <CLOCK                  ; Go clock out the CCD charge
         NOP                             ; Do loop restriction
 LPCLR

@@ -30,7 +30,12 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 ;* when not reading charges
 ;*******************************************
 
-IDLE	DO      Y:<NSR,IDL1     	; Loop over number of pixels per line
+IDLE	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns. If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers each reading half the number of pixels.
+	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
+        ASR     A                       ; Split in 2 
+	NOP                             ; 
+	MOVE	A,Y:<NSIDLE		; Number of columns in each subimage
+	DO      Y:<NSIDLE,IDL1     	; Loop over number of pixels per line
         MOVE    Y:<SERIAL_READ,R0 	; To be able to set SERIAL_READ dynamically, it needs to be assigned Y:<SERIAL_READ
         JSR     <CLOCK  		; Clock Stage 1
 
@@ -331,6 +336,7 @@ NS_SKP2	DC	0	; Number of serials to clear after read
 NRBIAS	DC	0	; Number of bias pixels to read
 NSREAD	DC	0	; Number of columns in subimage read
 NPREAD	DC	0	; Number of rows in subimage read
+NSIDLE  DC	0	;
 
 
 ; Definitions for CCD HV erase
