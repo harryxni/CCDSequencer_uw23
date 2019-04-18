@@ -49,7 +49,7 @@ SW_DELAY        EQU     $0C0000 ; Sum_well  clock delay
 VE_DELAY	EQU	$190000
 
 ;98 KHz clocking wavefors
-PRE_SET_DLY     EQU     $1E0000 ;
+PRE_SET_DLY     EQU     $0C0000 ;
 POST_SET_DLY    EQU     $0C0000 ;
 DCRST_DELAY     EQU     $030000 ; settling time 
 
@@ -214,7 +214,7 @@ PIT_SK_NDCR_SERIAL_READ
         ;Reset integrator
         ;Input video signal to ground clamp
         ;Non-inverting mode
-        DC      VIDEO+PRE_SET_DLY+%1110100
+        DC      VIDEO+$000000+%1110100
         ;Maybe: add wait time S_DELAY to hold this reset state.
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
