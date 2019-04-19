@@ -214,9 +214,16 @@ SET_SKIPPER_REPEAT
 	MOVE	X0,Y:PIT_SKREPEAT
 	JMP	<FINISH
 
+; Set the amplifier type
 SEL_AT  MOVE    X:(R3)+,X0
         MOVE    X0,Y:AMPLTYPE
         JMP     <FINISH
+
+;Set total number of columns to transmit
+SET_TOTALCOL
+        MOVE	X:(R3)+,X0
+        MOVE	X0,Y:TOTALCOL
+        JMP	<FINISH
 
 ; Read the time remaining until the exposure ends
 READ_EXPOSURE_TIME
@@ -318,7 +325,7 @@ PCI_READ_IMAGE
 	JSR	<XMT_WRD
 	MOVE	#'RDA',B
 	JSR	<XMT_WRD
-	MOVE	Y:NSR,B			; Number of columns to read
+        MOVE	Y:TOTALCOL,B			; Number of columns to read
 	JSR	<XMT_WRD
 	MOVE	Y:NPR,B			; Number of rows to read		
 	JSR	<XMT_WRD

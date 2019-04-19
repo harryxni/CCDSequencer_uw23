@@ -77,10 +77,6 @@ IDL1
 ; Parallel shift the image from the Imaging area into the Storage area
 ; Calculate some readout parameters
 RDCCD	CLR	A
-	JSET	#ST_SA,X:STATUS,SUB_IMG
-	MOVE	A1,Y:<NP_SKIP		; Zero these all out
-	MOVE	A1,Y:<NS_SKP1
-	MOVE	A1,Y:<NS_SKP2
 	NOP
 	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns
 ;If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers
@@ -89,75 +85,31 @@ RDCCD	CLR	A
         ASR     A                       ; Split in 2 
 	NOP                             ; 
 	MOVE	A,Y:<NS_READ		; Number of columns in each subimage
-	JMP	<WT_CLK
-
-; Loop over the required number of subimage boxes
-SUB_IMG	MOVE	Y:<NSREAD,A
-; !!!	ASR	A			; Effectively split serial since there
-	NOP				;   are two CCDs
-	MOVE	A,Y:<NS_READ	; Number of columns in each subimage
-
-
 
 ; Start the loop for parallel shifting desired number of lines
-WT_CLK
-
-; Later	-->	JSR	<GENERATE_SERIAL_WAVEFORM
 
 	JSR	<WAIT_TO_FINISH_CLOCKING
-
-; Skip over the required number of rows for subimage readout
-	MOVE	Y:<NP_SKIP,A		; Number of rows to skip
-	TST	A
-	JEQ	<CLR_SR
-	DO      Y:<NP_SKIP,L_PSKP
-	DO	Y:<NPBIN,L_PSKIP
-        MOVE    Y:<PARL,R0
-	JSR     <CLOCK  		; Go clock out the CCD charge
-        NOP
-L_PSKIP	NOP
-L_PSKP
-
-; Clear out the accumulated charge from the serial shift register
-CLR_SR	DO      Y:<NSCLR,L_CLRSR	; Loop over number of pixels to skip
-	MOVE    Y:<SERIAL_SKIP,R0	; Address of serial skipping waveforms
-	JSR     <CLOCK  		; Go clock out the CCD charge
-	NOP
-L_CLRSR		                     	; Do loop restriction
 
 ; This is the main loop over each line to be read out
 	DO      Y:<NPR,LPR		; Number of rows to read out
 
-; Exercise the parallel clocks, including binning if needed
-	DO	Y:<NPBIN,L_PBIN
+; Exercise the parallel clocks
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
-	NOP
-L_PBIN
 
 ; Check for a command once per line. Only the ABORT command should be issued.
-	MOVE	#COM_BUF,R3
-	JSR	<GET_RCV		; Was a command received?
-	JCC	<CONTINUE_READ		; If no, continue reading out
-	JMP	<PRC_RCV		; If yes, go process it
+        MOVE	#COM_BUF,R3
+        JSR	<GET_RCV		; Was a command received?
+        JCC	<CONTINUE_READ		; If no, continue reading out
+        JMP	<PRC_RCV		; If yes, go process it
 
 ; Abort the readout currently underway
 ABR_RDC	JCLR	#ST_RDC,X:<STATUS,ABORT_EXPOSURE
-	ENDDO				; Properly terminate readout loop
-	JMP	<ABORT_EXPOSURE
-
-; Skip over NS_SKP1 columns for subimage readout
-CONTINUE_READ
-	MOVE	Y:<NS_SKP1,A		; Number of columns to skip
-	TST	A
-	JLE	<L_READ
-	DO	Y:<NS_SKP1,L_SKP1	; Number of waveform entries total
-	MOVE	Y:<SERIAL_SKIP,R0	; Waveform table starting address
-	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
-	NOP
-L_SKP1
+        ENDDO				; Properly terminate readout loop
+        JMP	<ABORT_EXPOSURE
 
 ; Finally read some real pixels
+CONTINUE_READ	NOP
 L_READ	DO	Y:<NS_READ,L_RD
         MOVE	Y:<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
@@ -172,7 +124,7 @@ L_READ	DO	Y:<NS_READ,L_RD
         JSR     <CLOCK                          ; Write the clock waveforms to the output - i.e. run the clock
         MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
-	NOP
+        NOP
 PIT_SKR	NOP
 
         MOVE	#SERIAL_READ_CLRCHG_STAGE_2,R0
@@ -184,36 +136,10 @@ DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
         MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
 	
-CTNR	
+CTNR    NOP
 	NOP
-L_RD
-
-; Skip over NS_SKP2 columns if needed for subimage readout
-        MOVE	Y:<NS_SKP2,A		; Number of columns to skip
-	TST	A
-	JLE	<L_BIAS
-	DO	Y:<NS_SKP2,L_SKP2
-	MOVE	Y:<SERIAL_SKIP,R0	; Waveform table starting address
-	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
+L_RD    NOP
 	NOP
-L_SKP2
-
-; And read the bias pixels if in subimage readout mode
-L_BIAS	JCLR	#ST_SA,X:STATUS,END_ROW	; ST_SA = 0 => full image readout
-	TST	A
-	JLE	<END_ROW
-	MOVE	Y:<NRBIAS,A		; NR_BIAS = 0 => no bias pixels
-	TST	A
-	JLE	<END_ROW
-	JCLR	#SPLIT_S,X:STATUS,*+3
-	ASR	A			; Split serials require / 2
-	NOP
-	DO      A1,L_BRD		; Number of pixels to read out
-	MOVE	Y:<SERIAL_READ,R0
-	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charg
-	NOP
-L_BRD	NOP
-END_ROW	NOP
 LPR	NOP				; End of parallel loop
 
 ; Restore the controller to non-image data transfer and idling if necessary
