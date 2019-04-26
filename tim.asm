@@ -279,6 +279,8 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
         DC      'HDR',HCLK_DRXN
         DC      'CIT',CHG_IDL
         DC      'STC',SET_TOTALCOL
+        DC      'CPO',CH_POD
+        DC      'CPR',CH_PRD
 
 ; New LBNL commands
         DC      'ERS',ERASE             ; Persistent Image Erase        

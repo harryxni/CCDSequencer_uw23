@@ -37,7 +37,7 @@ NP_CLR		EQU	0    ; Parallel clocks to clear
 
 
 ;This is the integration period.
-;I_DELAY 	EQU     $B00000
+;I_DELAY 	EQU     $870000
 
 ; Delay numbers for clocking 
 P_DELAY         EQU     $C80000 ; Parallel clock delay 
@@ -46,11 +46,11 @@ R_DELAY         EQU     $0C0000 ; Serial register transfer delay
 ;Serial register skipping and summing well delays.
 S_DELAY         EQU     $060000 ; Serial register skipping delay
 SW_DELAY        EQU     $0C0000 ; Sum_well  clock delay 
-VE_DELAY	EQU	$190000
+VE_DELAY	EQU	$320000
 
 ;98 KHz clocking wavefors
-PRE_SET_DLY     EQU     $0C0000 ;
-POST_SET_DLY    EQU     $0C0000 ;
+;PRE_SET_DLY     EQU     $0C0000 ;
+;POST_SET_DLY    EQU     $0C0000 ;
 DCRST_DELAY     EQU     $030000 ; settling time 
 
 ; Macros to help getting from volts to bits.
@@ -209,7 +209,6 @@ END_VIDEO
 PIT_SK_NDCR_SERIAL_READ
         DC	END_PIT_SK_NDCR_SERIAL_READ-PIT_SK_NDCR_SERIAL_READ-1
                  
-
         ;Prepare the ADC for sampling.
         ;Reset integrator
         ;Input video signal to ground clamp
@@ -219,8 +218,11 @@ PIT_SK_NDCR_SERIAL_READ
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
         ;DC      VIDEO+VE_DELAY+%1110100
+        ;DC	VIDEO+PRE_SET_DLY
 
-
+        ;Close H3 so the charges cannot move back to SR. PRD also replaces
+        ;VE_DELAY since this takes care of the delay of the video flush.
+PRD0    DC      CLK3+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 
 	;Measure the pedestal	
         DC      VIDEO+$000000+%1110111  ; (1) -> StopDCRestore and (0) -> StopResetIntegrator
@@ -231,18 +233,20 @@ DLY0    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
 	
         ;Move charge to Sense node by SW->hi OUTG->Hi
         DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
+POD0	DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+        ;DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
 
 
 	;Read the signal, using inverting amp right over the measured value of the pedestal
-        ;DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
 DLY1    DC      VIDEO+%0001011
+        ;DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
         DC      VIDEO+$000000+%0011011  ; (4)->StopIntegrator
 	;(6) -> On low to high, transfer ADC output to a latch
 	;(5) -> On low to high start ADC sample/hold and conversion 
         DC      VIDEO+DCRST_DELAY+%1110111      
 
         ;Move charge back to SW by setting SW->Lo and OUTG->Lo
-        DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+        ;DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
         DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
         DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGH ;Move OUTG->high to keep charges in SW.
 
@@ -254,7 +258,6 @@ DLY1    DC      VIDEO+%0001011
         ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime - test moving this elsewhere
         ;SXA2    DC      $00F040
 END_PIT_SK_NDCR_SERIAL_READ
-
 
 ;********************
 ;This is the DES CCD Readout routine
@@ -271,11 +274,16 @@ PIT_DESI_SERIAL_READ
         ;Reset integrator
         ;Input video signal to ground clamp
         ;Non-inverting mode
-        ;DC      VIDEO+$000000+%1110100
+        DC      VIDEO+$000000+%1110100
         ;Maybe: add wait time S_DELAY to hold this reset state.
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
         ;DC      VIDEO+VE_DELAY+%1110100
+        ;DC	VIDEO+PRE_SET_DLY
+
+        ;Close H3 so the charges cannot move back to SR. PRD also replaces
+        ;VE_DELAY since this takes care of the delay of the video flush.
+PRD1    DC      CLK3+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 
 
         ;Measure the pedestal
@@ -287,7 +295,8 @@ DLY2    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
 
         ;Move charge to Sense node by SW->hi and then SW->lo, in a pulse mode sequence
         DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
-        DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+POD1    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+        ;DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
 
 
         ;Read the signal, using inverting amp right over the measured value of the pedestal
@@ -320,7 +329,7 @@ END_PIT_DESI_SERIAL_READ
 SK_SEND_BUFFER
         DC	END_SK_SEND_BUFFER-SK_SEND_BUFFER-1
 SXA2    DC      $00F040
-        DC      VIDEO+VE_DELAY+%1110100
+        ;DC      VIDEO+VE_DELAY+%1110100
 END_SK_SEND_BUFFER
 
 
@@ -351,6 +360,10 @@ END_SERIAL_READ_CLRCHG_STAGE_2
 ;on the serial register and pushed to the SW.
 ;
 ;This routine is different for L, R and LR and is run once per pixel.
+;
+;The line with PRE_SET_DLY is the same in all the 3 sequences.
+;In the interest of being able to manipulate PRE_SET_DLY
+;I am moving the line to inside the read routines.
 ;*********************************
 
 SERIAL_READ_L_STAGE1
@@ -362,7 +375,8 @@ SERIAL_READ_L_STAGE1
         DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h3->lo
         DC      CLK3+S_DELAY+RH+HU1H+HU2H+HU3L+HL1H+HL2H+HL3L+WL       ;h1->hi
         DC      CLK3+S_DELAY+RH+HU1H+HU2L+HU3L+HL1H+HL2L+HL3L+WL       ;h2->lo
-        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h3->hi, Delay
+;PRD0    DC      CLK3+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h3->hi, Delay
+        ;DC      CLK3+PRE_SET_DLY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 END_SERIAL_READ_L_STAGE1
 
 SERIAL_READ_R_STAGE1
@@ -374,20 +388,21 @@ SERIAL_READ_R_STAGE1
         DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3L+HL1L+HL2H+HL3L+WL       ;h1->lo
         DC      CLK3+S_DELAY+RH+HU1L+HU2H+HU3H+HL1L+HL2H+HL3H+WL       ;h3->hi
         DC      CLK3+S_DELAY+RH+HU1L+HU2L+HU3H+HL1L+HL2L+HL3H+WL       ;h2->lo
-        DC      CLK3+PRE_SET_DLY+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h1->hi, Delay
+;PRD1    DC      CLK3+RH+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL   ;h1->hi, Delay
+        ;DC      CLK3+PRE_SET_DLY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 END_SERIAL_READ_R_STAGE1
 
 SERIAL_READ_LR_STAGE1
         DC      END_SERIAL_READ_LR_STAGE1-SERIAL_READ_LR_STAGE1-1
-	;DC      VIDEO+$000000+%1110100
-        DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt. - line probably not needed here.
+        ;DC      VIDEO+$000000+%1110100  ; ADCLatch,NonInv,DCRestore,StrtRstInt. - line probably not needed here.
         DC      CLK3+S_DELAY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL           ;                   SW->lo
         DC      CLK3+S_DELAY+RL+HL1L+HL2L+HL3H+HU1H+HU2L+HU3L+WL           ;HL1->lo, HU3->lo  ,reset on
         DC      CLK3+S_DELAY+RH+HL1L+HL2H+HL3H+HU1H+HU2H+HU3L+WL           ;Hx2->hi           ,reset off
         DC      CLK3+S_DELAY+RH+HL1L+HL2H+HL3L+HU1L+HU2H+HU3L+WL           ;HL3->lo, HU1->Lo
         DC      CLK3+S_DELAY+RH+HL1H+HL2H+HL3L+HU1L+HU2H+HU3H+WL           ;HL1->hi, HU3->hi
         DC      CLK3+S_DELAY+RH+HL1H+HL2L+HL3L+HU1L+HU2L+HU3H+WL           ;Hx2->lo
-        DC      CLK3+PRE_SET_DLY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL       ;HL3->hi, HU1->hi, Delay
+;PRD2    DC      CLK3+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL       ;HL3->hi, HU1->hi, Delay
+        ;DC      CLK3+PRE_SET_DLY+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 END_SERIAL_READ_LR_STAGE1
 
 

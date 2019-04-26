@@ -713,8 +713,9 @@ HMP_END
         MOVE    #'DON',Y1
         JMP     <FINISH1
 
-;;;;;;;;;;;;;;;;;;
-;IDELAY Changer
+;---------------------
+;I_DELAY Changer
+;---------------------
 
 CHG_IDL MOVE    X:(R3)+,X0
         MOVE	Y:DLY0,A
@@ -740,6 +741,45 @@ CHG_IDL MOVE    X:(R3)+,X0
         OR	X0,A
         NOP
         MOVE	A1,Y:DLY3
+
+        JMP     <FINISH
+
+;------------------------
+;PRE_SET_DELAY changer
+;------------------------
+
+CH_PRD  MOVE    X:(R3)+,X0
+        MOVE	Y:PRD0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PRD0
+
+        MOVE	Y:PRD1,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PRD1
+
+        JMP     <FINISH
+
+
+;------------------------
+;POST_SET_DELAY changer
+;------------------------
+
+CH_POD  MOVE    X:(R3)+,X0
+        MOVE	Y:POD0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:POD0
+
+        MOVE	Y:POD1,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:POD1
 
         JMP     <FINISH
 
