@@ -797,6 +797,20 @@ CH_POD  MOVE    X:(R3)+,X0
 
         JMP     <FINISH
 
+
+;------------------------
+;Binning parameters changer
+;------------------------
+SNPBIN  MOVE    X:(R3)+,X0
+        MOVE    X0,Y:NPBIN
+        JMP     <FINISH
+
+SNSBIN  MOVE    X:(R3)+,X0
+        MOVE    X0,Y:NSBIN
+        JMP     <FINISH
+
+
+
 ;;;;;;;;;;;;;;;;;;
 
 

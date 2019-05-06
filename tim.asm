@@ -173,8 +173,14 @@ L_SKP1
 
 ; Finally read some real pixels
 L_READ	DO	Y:<NS_READ,L_RD
+
+;Serial binning goes here, since this is where the
+;serial clocks are exercises
+        DO	Y:<NSBIN,L_SBIN
         MOVE	Y:<SERIAL_READ,R0
-	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
+        JSR     <CLOCK
+        NOP
+L_SBIN
 	
         MOVE	Y:<AMPLTYPE,X0
         MOVE    #$0,A
@@ -295,6 +301,8 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
         DC      'STC',SET_TOTALCOL
         DC      'CPO',CH_POD
         DC      'CPR',CH_PRD
+        DC      'NPB',SNPBIN
+        DC      'NSB',SNSBIN
 
 ; New LBNL commands
         DC      'ERS',ERASE             ; Persistent Image Erase        
