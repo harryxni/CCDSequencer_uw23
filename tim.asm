@@ -351,7 +351,7 @@ PDIR    DC      0
 SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
 SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
 SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
-PARL    	DC	PARALLEL_INV
+PARL    	DC	PARALLEL_1
 HSEL            DC      '_LR'           ;Direction of H-clocks
 
 ; These parameters are set in "timCCDmisc.asm"

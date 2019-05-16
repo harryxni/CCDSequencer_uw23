@@ -677,15 +677,23 @@ SEL_VDIR
         MOVE    X0,Y:<OS
         MOVE    #$0,A
         CMP     X0,A
-        JNE     <VCLK_I
-        MOVE	#PARALLEL,X0
+        JNE     <VCLK_2
+        MOVE	#PARALLEL_1,X0
         MOVE	X0,Y:<PARL
 	MOVE    #'DON',Y1
         JMP     <FINISH1
-VCLK_I  MOVE    #PARALLEL_INV,X0
+VCLK_2  MOVE    #$1,A
+        CMP     X0,A
+        JNE     <VCLK_12
+        MOVE    #PARALLEL_2,X0
         MOVE	X0,Y:<PARL
 	MOVE    #'DON',Y1
         JMP     <FINISH1
+VCLK_12 MOVE    #PARALLEL_12,X0
+        MOVE	X0,Y:<PARL
+        MOVE    #'DON',Y1
+        JMP     <FINISH1
+
 
 ;;;;;;;;;;;;;;;;
 ;Select H-Clock directions
