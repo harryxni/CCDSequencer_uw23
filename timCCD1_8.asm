@@ -675,14 +675,14 @@ LNGDLY
 SEL_VDIR
         MOVE    X:(R3)+,X0
         MOVE    X0,Y:<OS
-        MOVE    #$0,A
+        MOVE    #'__A',A
         CMP     X0,A
         JNE     <VCLK_2
         MOVE	#PARALLEL_1,X0
         MOVE	X0,Y:<PARL
 	MOVE    #'DON',Y1
         JMP     <FINISH1
-VCLK_2  MOVE    #$1,A
+VCLK_2  MOVE    #'__B',A
         CMP     X0,A
         JNE     <VCLK_12
         MOVE    #PARALLEL_2,X0
