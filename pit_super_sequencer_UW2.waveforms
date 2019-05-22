@@ -563,28 +563,28 @@ DACS    DC      END_DACS-DACS-1
 
 ; Set the levels on the clock board
 	DC	$2A0080					; DAC = unbuffered mode
-	DC	$200100+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #1, V1L
+        DC	$200100+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #1, OneV1L
 	DC	$200200+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
-	DC	$200400+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #2, V2L
+        DC	$200400+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #2, OneV2L
 	DC	$200800+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
-	DC	$202000+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #3, V3L
+        DC	$202000+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #3, OneV3L
 	DC	$204000+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
-	DC	$208000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #4, Unused
-	DC	$210000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
-	DC	$220100+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #5, Unused
-	DC	$220200+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
-	DC	$220400+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #6, Unused
-	DC	$220800+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
+        DC	$208000+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #4, TwoV1L
+        DC	$210000+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
+        DC	$220100+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #5, TwoV2L
+        DC	$220200+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
+        DC	$220400+@CVI((VCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #6, TwoV3L
+        DC	$220800+@CVI((VCLK_LO+Vmax)/(2*Vmax)*255)
 	DC	$222000+@CVI((TGATE_HI+Vmax)/(2*Vmax)*255)	; Pin #7, Trans Gate
 	DC	$224000+@CVI((TGATE_LO+Vmax)/(2*Vmax)*255)
-        DC	$228000+@CVI((OUTG_HI+Vmax)/(2*Vmax)*255)	; Pin #8, OG_L / OUTG
+        DC	$228000+@CVI((OUTG_HI+Vmax)/(2*Vmax)*255)	; Pin #8, OG_1 / OUTG
         DC	$230000+@CVI((OUTG_LO+Vmax)/(2*Vmax)*255)
-	DC	$240100+@CVI((DG_HI+Vmax)/(2*Vmax)*255)		; Pin #9, DG_L
-	DC	$240200+@CVI((DG_LO+Vmax)/(2*Vmax)*255)
-        DC	$240400+@CVI((OUTG_HI+Vmax)/(2*Vmax)*255)	; Pin #10, OG_U / OUTG
+        DC	$240100+@CVI((TGATE_HI+Vmax)/(2*Vmax)*255)		; Pin #9, Trans gate
+        DC	$240200+@CVI((TGATE_LO+Vmax)/(2*Vmax)*255)
+        DC	$240400+@CVI((OUTG_HI+Vmax)/(2*Vmax)*255)	; Pin #10, OG_2 / OUTG
         DC	$240800+@CVI((OUTG_LO+Vmax)/(2*Vmax)*255)
-	DC	$242000+@CVI((DG_HI+Vmax)/(2*Vmax)*255)		; Pin #11, DG_U
-	DC	$244000+@CVI((DG_LO+Vmax)/(2*Vmax)*255)
+        DC	$242000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)		; Pin #11, Unused
+        DC	$244000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
 	DC	$248000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #12, Unused
 	DC	$250000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)        
 
@@ -602,14 +602,14 @@ DACS    DC      END_DACS-DACS-1
 	DC	$280800+@CVI((HCLK_LO+Vmax)/(2*Vmax)*255)
         DC	$282000+@CVI((W_HI+Vmax)/(2*Vmax)*255)		; Pin #19, SW_L/W
         DC	$284000+@CVI((W_LO+Vmax)/(2*Vmax)*255)
-	DC	$288000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #33, Unused
-	DC	$290000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
+        DC	$288000+@CVI((DG_HI+Vmax)/(2*Vmax)*255)         ; Pin #33, DG_1
+        DC	$290000+@CVI((DG_LO+Vmax)/(2*Vmax)*255)
 	DC	$2A0100+@CVI((RGATE_HI+Vmax)/(2*Vmax)*255)	; Pin #34, Reset Gate
 	DC	$2A0200+@CVI((RGATE_LO+Vmax)/(2*Vmax)*255)
-	DC	$2A0400+@CVI((RGATE_HI+Vmax)/(2*Vmax)*255)	; Pin #35, Reset Gate
-	DC	$2A0800+@CVI((RGATE_LO+Vmax)/(2*Vmax)*255)
-	DC	$2A2000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #36, Dump gate
-	DC	$2A4000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
+        DC	$2A0400+@CVI((DG_HI+Vmax)/(2*Vmax)*255)	; Pin #35, DG_2
+        DC	$2A0800+@CVI((DG_LO+Vmax)/(2*Vmax)*255)
+        DC	$2A2000+@CVI((RGATE_HI+Vmax)/(2*Vmax)*255)	; Pin #36, Reset Gate
+        DC	$2A4000+@CVI((RGATE_LO+Vmax)/(2*Vmax)*255)
         DC	$2A8000+@CVI((W_HI+Vmax)/(2*Vmax)*255)		; Pin #37, SW_U/W
         DC	$2B0000+@CVI((W_LO+Vmax)/(2*Vmax)*255)
 
