@@ -708,7 +708,7 @@ HCLK_DRXN
         MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_L_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
-        BCLR    #SPLIT_S,X:STATUS
+        ;BCLR    #SPLIT_S,X:STATUS      ;(issue Interlaced lines in UL + U/L mode) Note: This is reqd only if this setting auto-selects 2Xcols.
         JMP     <HMP_END
 HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         CMP     X0,A
@@ -717,7 +717,7 @@ HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_R_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
-        BCLR    #SPLIT_S,X:STATUS
+        ;BCLR    #SPLIT_S,X:STATUS      ;See comment above
         JMP     <HMP_END
 HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
         CMP     X0,A
@@ -726,7 +726,7 @@ HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
         MOVE	X0,Y:SERIAL_SKIP        ;
         MOVE	#SERIAL_READ_LR_STAGE1,X0
         MOVE	X0,Y:<SERIAL_READ
-        BSET    #SPLIT_S,X:STATUS
+        ;BSET    #SPLIT_S,X:STATUS      ;See comment above
         JMP     <HMP_END
 HMP_ERROR
         MOVE    #'ERR',X0

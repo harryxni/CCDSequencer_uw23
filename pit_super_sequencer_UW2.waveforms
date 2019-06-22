@@ -173,13 +173,10 @@ DUMPGL	EQU	0
 ;******************************
 ;  
 ;Parallel clock direction is V1->V2->V3 in the normal configuration.
-;According to the excel spreadsheet of the pinouts, the pins I see are
-;(side 2) V1,V2,V3 V3,V2,V1 (side 1)
-;Therefore the sequence to drive the charges
-;in the same direction will be the opposite on OneV and TwoV.
-;Page 4 of the 4k by 2k manual illustrates the same principle for
-;that CCD as well but they cross bonded the pads to get over this
-;effect.
+;The sequence to drive the charges
+;in the same direction will be the same on OneV and TwoV.
+;Page 4 of the 4k by 2k manual illustrates this principle for
+;that CCD as well.
 
 PARALLEL_1
         DC      PARALLEL_2-PARALLEL_1-1
