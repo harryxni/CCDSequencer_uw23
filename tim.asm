@@ -303,6 +303,12 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
         DC      'CPR',CH_PRD
         DC      'NPB',SNPBIN
         DC      'NSB',SNSBIN
+        DC      'DGW',CHG_DGW
+        DC      'RSW',CHG_RSW
+        DC      'OGW',CHG_OGW
+        DC      'SWW',CHG_SWW
+
+
 
 ; New LBNL commands
         DC      'ERS',ERASE             ; Persistent Image Erase        

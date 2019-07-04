@@ -766,6 +766,41 @@ CHG_IDL MOVE    X:(R3)+,X0
 
         JMP     <FINISH
 
+;---------------------
+;DG_Width and Reset_width Changer
+;---------------------
+CHG_DGW MOVE    X:(R3)+,X0
+        MOVE	Y:DDL0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DDL0
+        JMP     <FINISH
+
+CHG_RSW MOVE    X:(R3)+,X0
+        MOVE	Y:RDL0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:RDL0
+        JMP     <FINISH
+
+CHG_OGW MOVE    X:(R3)+,X0
+        MOVE	Y:OGD0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:OGD0
+        JMP     <FINISH
+
+CHG_SWW MOVE    X:(R3)+,X0
+        MOVE	Y:SWD0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SWD0
+        JMP     <FINISH
+
 ;------------------------
 ;PRE_SET_DELAY changer
 ;------------------------
