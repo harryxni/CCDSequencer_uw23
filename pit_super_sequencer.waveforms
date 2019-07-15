@@ -259,7 +259,7 @@ DLY0    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
 	
 	
         ;Move charge to Sense node by SW->hi OUTG->Hi
-        DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
+SWD0    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
 POD0	DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
         ;DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
 
@@ -274,11 +274,11 @@ DLY1    DC      VIDEO+%0001011
 
         ;Move charge back to SW by setting SW->Lo and OUTG->Lo
         ;DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
+OGD0    DC	CLK2+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
         DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGH ;Move OUTG->high to keep charges in SW.
 
         ;Before the skipper cycle begins again, we will reset the sense node once.
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
+RDL0    DC      CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
         DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
 
 
@@ -371,7 +371,7 @@ SERIAL_READ_CLRCHG_STAGE_2
 	DC      END_SERIAL_READ_CLRCHG_STAGE_2-SERIAL_READ_CLRCHG_STAGE_2-1
         ;We need to dump the charges here
         DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;SW->hi
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGL ;Dump->low
+DDL0    DC	CLK2+V1H+V2L+V3H+TH+OUTGH+DUMPGL ;Dump->low
         DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGH ;Dump->high
 
         ;Note: A reset happens after the last ops.
