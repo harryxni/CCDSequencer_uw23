@@ -701,7 +701,7 @@ VCLK_12 MOVE    #PARALLEL_12,X0
 HCLK_DRXN
         MOVE    X:(R3)+,X0              ; Get amplifier(s) name
         MOVE    X0,Y:<HSEL
-        MOVE    #'__L',A                ; LEFT Amplifier = readout #0
+        MOVE    #'__L',A                ; readout #0 - Pin 1 - connected to L
         CMP     X0,A
         JNE     <HCMP_R
         MOVE	#SERIAL_SKIP_L,X0
@@ -710,7 +710,7 @@ HCLK_DRXN
         MOVE	X0,Y:<SERIAL_READ
         ;BCLR    #SPLIT_S,X:STATUS      ;(issue Interlaced lines in UL + U/L mode) Note: This is reqd only if this setting auto-selects 2Xcols.
         JMP     <HMP_END
-HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
+HCMP_R  MOVE    #'__U',A                ; readout #1 - Pin 8 - connected to U
         CMP     X0,A
         JNE     <HCMP_LR
         MOVE	#SERIAL_SKIP_R,X0
@@ -719,7 +719,7 @@ HCMP_R  MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
         MOVE	X0,Y:<SERIAL_READ
         ;BCLR    #SPLIT_S,X:STATUS      ;See comment above
         JMP     <HMP_END
-HCMP_LR MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
+HCMP_LR MOVE    #'_LU',A                ; LEFT and RIGHT = readouts #0 and #1
         CMP     X0,A
         JNE     <HMP_ERROR
         MOVE	#SERIAL_SKIP_LR,X0
@@ -860,7 +860,7 @@ SNSBIN  MOVE    X:(R3)+,X0
 
 ; Select which readouts to process
 ;   'SOS'  Amplifier_name  
-;       Amplifier_name = '__L', '__R', '_LR'
+;       Amplifier_name = '__L', '__U', '_LU'
 
 SEL_OS  MOVE    X:(R3)+,X0              ; Get amplifier(s) name
         MOVE    X0,Y:<OS
@@ -873,7 +873,7 @@ SEL_OS  MOVE    X:(R3)+,X0              ; Get amplifier(s) name
 SELECT_OUTPUT_SOURCE
 
 ; Set all the waveform addresses depending on which readout mode
-        MOVE    #'__L',A                ; LEFT Amplifier = readout #0
+        MOVE    #'__L',A                ; readout #0 / (lead A) - Pin 1 - connected to L
         CMP     X0,A
         JNE     <CMP_R
         BCLR    #SPLIT_P,X:STATUS
@@ -881,12 +881,12 @@ SELECT_OUTPUT_SOURCE
 	MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_L_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F000,X0             ; Transmit channel 1 - our cable is flipped  (PM)
+        MOVE    #$00F000,X0             ; Transmit amplifier on pin 1 (lead A)
 CMP_RR  MOVE    X0,Y:SXA2
         BCLR    #SPLIT_S,X:STATUS
         JMP     <CMP_END
 
-CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
+CMP_R   MOVE    #'__U',A                ; readout #1 (lead B) - Pin 8 - connected to U
         CMP     X0,A
         JNE     <CMP_LR
         BCLR    #SPLIT_P,X:STATUS
@@ -894,12 +894,12 @@ CMP_R   MOVE    #'__R',A                ; RIGHT Amplifier = readout #1
 	MOVE	X0,Y:SERIAL_SKIP
         MOVE	#SERIAL_READ_R_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
-        MOVE    #$00F041,X0             ; Transmit channel 0  - our cable is flipped (PM) 
+        MOVE    #$00F041,X0             ; Transmit amplifier on pin 8 (lead B)
 CMP_LL  MOVE    X0,Y:SXA2
         BCLR    #SPLIT_S,X:STATUS
         JMP     <CMP_END
 
-CMP_LR  MOVE    #'_LR',A                ; LEFT and RIGHT = readouts #0 and #1
+CMP_LR  MOVE    #'_LU',A                ; U and L = readouts #0 and #1
         CMP     X0,A
         JNE     <CMP_12
         BCLR    #SPLIT_P,X:STATUS
