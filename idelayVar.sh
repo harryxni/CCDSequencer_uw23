@@ -19,21 +19,21 @@
 TIMING_NS=$(bc <<< "($1*1000+0.5)/1")
 
 #If the number is > 5us, always use 640ns intervals
-if [ "$TIMING_NS" -gt 4000 ];
+if [ "$TIMING_NS" -gt 3000 ];
 then
-TIMING_BIGMULT=$(( TIMING_NS/640 | 0x80))
+TIMING_BIGMULT=$(( TIMING_NS/320 | 0x80))
 HEX_BIGMULT=$(bc -l <<< "obase=16;$TIMING_BIGMULT")
 
 echo "Please use the line: "
 echo "I_DELAY 	EQU     $"$HEX_BIGMULT"0000"
 
 else
-#if between 640ns and 40ns, 640 is a closer match, then use that
-BIGREMINDER=$(( TIMING_NS % 640 > 320 ? 640-TIMING_NS % 640 : TIMING_NS % 640 ))
+#if between 320ns and 40ns, 320 is a closer match, then use that
+BIGREMINDER=$(( TIMING_NS % 320 > 160 ? 320-TIMING_NS % 320 : TIMING_NS % 320 ))
 LITTLEREMINDER=$(( TIMING_NS % 40 > 20 ? 40-TIMING_NS % 40 : TIMING_NS % 40 ))
 if (( BIGREMINDER <= LITTLEREMINDER ));
 then
-TIMING_BIGMULT=$(( TIMING_NS/640 | 0x80))
+TIMING_BIGMULT=$(( TIMING_NS/320 | 0x80))
 HEX_BIGMULT=$(bc -l <<< "obase=16;$TIMING_BIGMULT")
 
 echo "Please use the line: "
