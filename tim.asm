@@ -80,6 +80,8 @@ NO_COM	NOP
 IDL1
         MOVE    Y:<PARL,R0		; Address of parallel clocking waveform
 	JSR     <CLOCK  		; Go clock out the CCD charge
+        MOVE    #RESET_AFTER_PARALLEL,R0
+        JSR     <CLOCK
 	JMP     <IDLE	
 
 	
@@ -128,6 +130,8 @@ WT_CLK
 	DO	Y:<NPBIN,L_PSKIP
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
+        MOVE    #RESET_AFTER_PARALLEL,R0
+        JSR     <CLOCK
         NOP
 L_PSKIP	NOP
 L_PSKP
@@ -146,6 +150,9 @@ L_CLRSR		                     	; Do loop restriction
 	DO	Y:<NPBIN,L_PBIN
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
+        MOVE    #RESET_AFTER_PARALLEL,R0
+        JSR     <CLOCK
+
 	NOP
 L_PBIN
 

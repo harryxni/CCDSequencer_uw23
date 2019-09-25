@@ -799,6 +799,13 @@ CHG_SWW MOVE    X:(R3)+,X0
         OR	X0,A
         NOP
         MOVE	A1,Y:SWD0
+
+        MOVE	Y:DRS0,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:DRS0
+
         JMP     <FINISH
 
 ;------------------------
