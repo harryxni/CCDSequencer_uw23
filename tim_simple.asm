@@ -46,8 +46,8 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 
 IDLE	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns. If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers each reading half the number of pixels.
 	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
-        ASR     A                       ; Split in 2 
-	NOP                             ; 
+        ASR     A                       ; Split in 2
+	NOP                             ;
 	MOVE	A,Y:<NSIDLE		; Number of columns in each subimage
 	DO      Y:<NSIDLE,IDL1     	; Loop over number of pixels per line
         MOVE    Y:<SERIAL_READ,R0 	; To be able to set SERIAL_READ dynamically, it needs to be assigned Y:<SERIAL_READ
@@ -80,9 +80,9 @@ NO_COM	NOP
 IDL1
         MOVE    Y:<PARL,R0		; Address of parallel clocking waveform
 	JSR     <CLOCK  		; Go clock out the CCD charge
-	JMP     <IDLE	
+	JMP     <IDLE
 
-	
+
 
 ;  *****************  Exposure and readout routines  *****************
 
@@ -96,20 +96,34 @@ RDCCD	CLR	A
 ;If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers
 ;each reading half the number of pixels.
 	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
-        ASR     A                       ; Split in 2 
-	NOP                             ; 
+        ASR     A                       ; Split in 2
+	NOP                             ;
 	MOVE	A,Y:<NS_READ		; Number of columns in each subimage
 
 ; Start the loop for parallel shifting desired number of lines
 
-	JSR	<WAIT_TO_FINISH_CLOCKING
+;	JSR	<WAIT_TO_FINISH_CLOCKING
+
+; Clear out the accumulated charge from the serial shift register
+CLR_SR	DO      Y:<NSCLR,L_CLRSR	; Loop over number of pixels to skip
+	MOVE    Y:<SERIAL_SKIP,R0	; Address of serial skipping waveforms
+	JSR     <CLOCK  		; Go clock out the CCD charge
+	NOP
+L_CLRSR		                     	; Do loop restriction
+
+
 
 ; This is the main loop over each line to be read out
 	DO      Y:<NPR,LPR		; Number of rows to read out
 
-; Exercise the parallel clocks
-        MOVE    Y:<PARL,R0
-	JSR     <CLOCK  		; Go clock out the CCD charge
+; Exercise the parallel clocks, including binning if needed
+  DO	Y:<NPBIN,L_PBIN
+  MOVE    Y:<PARL,R0
+  JSR     <CLOCK  		; Go clock out the CCD charge
+  MOVE    #RESET_AFTER_PARALLEL,R0
+  JSR     <CLOCK
+  NOP
+L_PBIN
 
 ; Check for a command once per line. Only the ABORT command should be issued.
         MOVE	#COM_BUF,R3
@@ -155,7 +169,7 @@ DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
         MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
-	
+
 CTNR    NOP
 	NOP
 L_RD    NOP
@@ -173,8 +187,9 @@ RDC_E	JSR	<WAIT_TO_FINISH_CLOCKING
 	BCLR	#ST_RDC,X:<STATUS	; Set status to not reading out
         JMP     <START
 ; back 2 normal time/space continum
-        
-	INCLUDE "timCCD1_8.asm"                 ; Generic 	
+
+;INCLUDE "timCCD1_8.asm"                 ; Generic
+  INCLUDE "timCCD1_8_simple.asm"                 ; Generic
 
 TIMBOOT_X_MEMORY	EQU	@LCV(L)
 
@@ -195,10 +210,11 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'POF',POWER_OFF
 	DC	'SBV',SET_BIAS_VOLTAGES
 	DC	'IDL',IDL
-	DC	'OSH',OPEN_SHUTTER
-	DC	'CSH',CLOSE_SHUTTER
+	;DC	'OSH',OPEN_SHUTTER
+	;DC	'CSH',CLOSE_SHUTTER
 	DC	'RDC',RDCCD 			; Begin CCD readout
-	DC	'CLR',CLEAR  			; Fast clear the CCD   
+	;DC	'CLR',CLEAR  			; Fast clear the CCD
+  DC	'RDP',STR_RDC  			; ReadyPCI+RDCCD
 
 ; Exposure and readout control routines
 	DC	'SET',SET_EXPOSURE_TIME
@@ -212,33 +228,33 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'SSR',SET_SKIPPER_REPEAT
 
 ; Support routines
-	DC	'SGN',ST_GAIN      
+	DC	'SGN',ST_GAIN
 	DC	'SBN',SET_BIAS_NUMBER
 	DC	'SMX',SET_MUX
 	DC	'CSW',CLR_SWS
 	DC	'SOS',SEL_OS
 	DC	'SSS',SET_SUBARRAY_SIZES
 	DC	'SSP',SET_SUBARRAY_POSITIONS
-	DC	'RCC',READ_CONTROLLER_CONFIGURATION 
-        DC	'SAT',SEL_AT
-        DC      'VDR',SEL_VDIR
-        DC      'HDR',HCLK_DRXN
-        DC      'CIT',CHG_IDL
-        DC      'STC',SET_TOTALCOL
-        DC      'CPO',CH_POD
-        DC      'CPR',CH_PRD
-        DC      'NPB',SNPBIN
-        DC      'NSB',SNSBIN
+	DC	'RCC',READ_CONTROLLER_CONFIGURATION
+  DC	'SAT',SEL_AT
+  DC  'VDR',SEL_VDIR
+  DC  'HDR',HCLK_DRXN
+  DC  'CIT',CHG_IDL
+  DC  'STC',SET_TOTALCOL
+  DC  'CPO',CH_POD
+  DC  'CPR',CH_PRD
+  DC  'NPB',SNPBIN
+  DC  'NSB',SNSBIN
+  DC  'DGW',CHG_DGW
+  DC  'RSW',CHG_RSW
+  DC  'OGW',CHG_OGW
+  DC  'SWW',CHG_SWW
 
-; New LBNL commands
-        DC      'ERS',ERASE             ; Persistent Image Erase        
-        DC      'HLD',HOLD_CLK          ; Stop clocking during erase    
 
-        
 END_APPLICATON_COMMAND_TABLE	EQU	@LCV(L)
 
 	IF	@SCP("DOWNLOAD","HOST")
-NUM_COM			EQU	(@LCV(R)-COM_TBL_R)/2	; Number of boot + 
+NUM_COM			EQU	(@LCV(R)-COM_TBL_R)/2	; Number of boot +
 							;  application commands
 EXPOSING		EQU	CHK_TIM			; Address if exposing
 CONTINUE_READING	EQU	CONTINUE_READ 		; Address if reading out
@@ -256,12 +272,14 @@ CONTINUE_READING	EQU	CONTINUE_READ 		; Address if reading out
 GAIN	DC	END_APPLICATON_Y_MEMORY-@LCV(L)-1
 NSR     DC      10   	 	; Number Serial Read, prescan + image + bias
 NPR     DC      10	     	; Number Parallel Read
-NSCLR   DC      NS_CLR             ;see waveform file 4 this one and next
-NPCLR   DC      NP_CLR    	; To clear the parallel register
+;NSCLR   DC      NS_CLR             ;see waveform file 4 this one and next
+;NPCLR   DC      NP_CLR    	; To clear the parallel register
+NSCLR   DC      0             ;see waveform file 4 this one and next
+NPCLR   DC      0    	; To clear the parallel register
 NSBIN   DC      1       	; Serial binning parameter
 NPBIN   DC      1       	; Parallel binning parameter
 TST_DAT	DC	0		; Temporary definition for test images
-SH_DEL	DC	10		; Delay in milliseconds between shutter closing 
+SH_DEL	DC	0		; Delay in milliseconds between shutter closing
 				;   and image readout
 CONFIG	DC	CC		; Controller configuration
 NS_READ DC      0               ; brought in for roi r.a. 3/21/2011
@@ -274,10 +292,10 @@ PDIR    DC      0
 ;SERIAL_READ	DC	SERIAL_READ_LR	; Address of serial reading waveforms  (2sides)
 ;SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms (2sides)
 
-SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
+SERIAL_SKIP 	DC	SERIAL_SKIP_L	; Serial skipping waveforms was L
 SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
 SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
-PARL    	DC	PARALLEL_INV
+PARL    	DC	PARALLEL_1
 HSEL            DC      '_LR'           ;Direction of H-clocks
 
 ; These parameters are set in "timCCDmisc.asm"
@@ -314,4 +332,3 @@ END_APPLICATON_Y_MEMORY	EQU	@LCV(L)
 
 ; End of program
 	END
-

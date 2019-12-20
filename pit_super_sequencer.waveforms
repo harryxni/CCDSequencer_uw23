@@ -54,19 +54,21 @@ NP_CLR		EQU	0    ; Parallel clocks to clear
 ;This is the integration period.
 ;I_DELAY 	EQU     $870000
 
-; Delay numbers for clocking 
-P_DELAY         EQU     $C80000 ; Parallel clock delay 
+; Delay numbers for clocking
+P_DELAY         EQU     $C80000 ; Parallel clock delay
 R_DELAY         EQU     $0C0000 ; Serial register transfer delay
 
 ;Serial register skipping and summing well delays.
 S_DELAY         EQU     $060000 ; Serial register skipping delay
-SW_DELAY        EQU     $0C0000 ; Sum_well  clock delay 
+SW_DELAY        EQU     $0C0000 ; Sum_well  clock delay
 VE_DELAY	EQU	$320000
 
 ;98 KHz clocking wavefors
 ;PRE_SET_DLY     EQU     $0C0000 ;
 ;POST_SET_DLY    EQU     $0C0000 ;
-DCRST_DELAY     EQU     $030000 ; settling time 
+DCRST_DELAY     EQU     $030000 ; settling time
+DCSKRST_DELAY   EQU     $830000 ; settling time
+
 
 ; Macros to help getting from volts to bits.
 
@@ -94,7 +96,7 @@ DUMMY2  SET     @CVI((BRDNUM_\NAME<<20)|(BRDTYP_\NAME<<18)|(DAC_\NAME<<14)|DUMMY
         ENDM
 
 
-;The next section assigns the pinouts for the clocking board. The Leach system has 
+;The next section assigns the pinouts for the clocking board. The Leach system has
 ;two banks of pinouts. Each bank, is assigned to a clock. Pins 1-12 are assigned to
 ;CLK2 and pins 13-19 and 33-37 are assigned to CLK3. The pin assignments are done as:
 ;
@@ -116,52 +118,52 @@ DUMMY2  SET     @CVI((BRDNUM_\NAME<<20)|(BRDTYP_\NAME<<18)|(DAC_\NAME<<14)|DUMMY
 ;The vertical registers
 V1L     EQU     0
 V1H     EQU     $1
-V2L     EQU     0       
-V2H     EQU     $2      
-V3L     EQU     0       
-V3H     EQU     $4      
+V2L     EQU     0
+V2H     EQU     $2
+V3L     EQU     0
+V3H     EQU     $4
 
 ; Transfer gate
-TL      EQU     0       
-TH      EQU     $40     
+TL      EQU     0
+TH      EQU     $40
 
 ;Skipper output gate OG
 OUTGL	EQU	0
 OUTGH	EQU	$280	; skipper output gate - Pins 8 (0x80) + 10 (0x200) on CLK2
 
 ;Dump gates on both sides of the CCD
-DUMPGH	EQU	$500	; pin 9 (0x100) + pin 11 (0x400) 
+DUMPGH	EQU	$500	; pin 9 (0x100) + pin 11 (0x400)
 DUMPGL	EQU	0
 
 ;Bank 1 - The pins attached to CLK3
 
 ;The horizontal pins
 HL1L    EQU     0
-HL1H    EQU     $001    
+HL1H    EQU     $001
 HL2L    EQU     0
-HL2H    EQU     $002    
+HL2H    EQU     $002
 HL3L    EQU     0
-HL3H    EQU     $004   
-HU1L    EQU     0       
-HU1H    EQU     $008  
-HU2L    EQU     0       
-HU2H    EQU     $010     
-HU3L    EQU     0      
-HU3H    EQU     $020    
+HL3H    EQU     $004
+HU1L    EQU     0
+HU1H    EQU     $008
+HU2L    EQU     0
+HU2H    EQU     $010
+HU3L    EQU     0
+HU3H    EQU     $020
 
 ;Skipper output gate SW. Both summing wells clocked together.
 WL      EQU     0
 WH      EQU     $840    ; $840 = pins 19, (0x40) + 37 (0x800)
 
 ; Reset both output nodes
-RL      EQU     0       
-RH      EQU     $300	; $300 = pin 34 (0x100) + pin 35 (0x200) 
+RL      EQU     0
+RH      EQU     $300	; $300 = pin 34 (0x100) + pin 35 (0x200)
 
 
 ;******************************
 ;* VERTICAL REGISTER SECTION  *
 ;******************************
-;  
+;
 ;Parallel clock direction is V1->V2->V3 in the normal configuration.
 ;
 PARALLEL_1
@@ -196,7 +198,14 @@ PARALLEL_12
         DC      CLK2+P_DELAY+V1H+V2L+V3L+TL+OUTGH+DUMPGH      ;HLL
         DC      CLK2+P_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGH      ;HLH + shut TG
 END_PARALLEL
-;*****REMOVE*** DC 0
+
+;A Reset is performed after all parallel clocks.
+RESET_AFTER_PARALLEL
+        DC      END_RESET_AFTER_PARALLEL-RESET_AFTER_PARALLEL-1
+RDL0    DC      CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+WL+RL ;Reset->low
+        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+WL+RH ;Reset->high
+END_RESET_AFTER_PARALLEL
+
 
 ;******************************
 ;*   SERIAL REGISTER SECTION  *
@@ -235,12 +244,12 @@ END_VIDEO
 
 PIT_SK_NDCR_SERIAL_READ
         DC	END_PIT_SK_NDCR_SERIAL_READ-PIT_SK_NDCR_SERIAL_READ-1
-                 
+
         ;Prepare the ADC for sampling.
         ;Reset integrator
         ;Input video signal to ground clamp
         ;Non-inverting mode
-        DC      VIDEO+$000000+%1110100
+        DC      VIDEO+DCRST_DELAY+%1110100
         ;Maybe: add wait time S_DELAY to hold this reset state.
         ;since ordinarily there would be a couple of serial register cycles
         ;this state would hold.
@@ -249,41 +258,33 @@ PIT_SK_NDCR_SERIAL_READ
 
         ;Close H3 so the charges cannot move back to SR. PRD also replaces
         ;VE_DELAY since this takes care of the delay of the video flush.
-PRD0    DC      CLK3+RH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
+PRD0    DC      CLK3+RH+DUMPGH+HL1H+HL2L+HL3H+HU1H+HU2L+HU3H+WL
 
-	;Measure the pedestal	
+	;Measure the pedestal
         DC      VIDEO+$000000+%1110111  ; (1) -> StopDCRestore and (0) -> StopResetIntegrator
 DLY0    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
-        ;DC      VIDEO+I_DELAY+%0000111  ; Integrate for I_DELAY microsec
         DC      VIDEO+$000000+%0011011  ; (4) -> Stop Integration and (3,2)-> sel inverting int.
-	
-	
+
+
         ;Move charge to Sense node by SW->hi OUTG->Hi
-SWD0    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH
-POD0	DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
+SWD0    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+RH+WH
+POD0	DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+RH+WL
         ;DC	CLK3+POST_SET_DLY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
 
 
 	;Read the signal, using inverting amp right over the measured value of the pedestal
 DLY1    DC      VIDEO+%0001011
-        ;DC      VIDEO+I_DELAY+%0001011  ; Integrate for I_DELAY microsec
         DC      VIDEO+$000000+%0011011  ; (4)->StopIntegrator
 	;(6) -> On low to high, transfer ADC output to a latch
-	;(5) -> On low to high start ADC sample/hold and conversion 
-        DC      VIDEO+DCRST_DELAY+%1110111      
+	;(5) -> On low to high start ADC sample/hold and conversion
+        DC      VIDEO+DCSKRST_DELAY+%1110111
 
         ;Move charge back to SW by setting SW->Lo and OUTG->Lo
         ;DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+RH+WL
-OGD0    DC	CLK2+V1H+V2L+V3H+TH+DUMPGH+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+DUMPGH+OUTGH ;Move OUTG->high to keep charges in SW.
-
-        ;Before the skipper cycle begins again, we will reset the sense node once.
-RDL0    DC      CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RL ;Reset->low
-        DC      CLK3+S_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WL+RH ;Reset->high
+OGD0    DC      CLK2+TH+V1H+V2L+V3H+OUTGL ;Move OUTG->lo to to move charge SN->OG->SW
+        DC      CLK2+SW_DELAY+TH+V1H+V2L+V3H+OUTGH ;Move OUTG->high to keep charges in SW.
 
 
-        ; Transmit a/d data to host SELECT_OUTPUT_SOURCE overwrites this at runtime - test moving this elsewhere
-        ;SXA2    DC      $00F040
 END_PIT_SK_NDCR_SERIAL_READ
 
 ;********************
@@ -369,14 +370,17 @@ END_SK_SEND_BUFFER
 
 SERIAL_READ_CLRCHG_STAGE_2
 	DC      END_SERIAL_READ_CLRCHG_STAGE_2-SERIAL_READ_CLRCHG_STAGE_2-1
+
+        ;Move charge to SN by clocking summing well.
+DRS0    DC      CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+WH+RH ;SW->hi and Dump->lo
+        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+WL+RH ;Dump->high
+
         ;We need to dump the charges here
-        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;SW->hi
-DDL0    DC	CLK2+V1H+V2L+V3H+TH+OUTGH+DUMPGL ;Dump->low
-        DC	CLK2+SW_DELAY+V1H+V2L+V3H+TH+OUTGH+DUMPGH ;Dump->high
+DDL0    DC      CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGL+WL+RH ;SW->hi and Dump->lo
+        DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+WL+RH ;Dump->high
 
         ;Note: A reset happens after the last ops.
         ;Another one will happoen before first ops. We dont need a reset here.
-        ;DC      CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+WH+RH ;reset->hi
 
 END_SERIAL_READ_CLRCHG_STAGE_2
 
@@ -517,11 +521,11 @@ END_PARALLELS_DURING_READOUT
 ; persistent image erase voltage tables
 ; Removed 11/7/05 at UM
 VSUBN
-        
+
 ERHI    DC EREND-ERHI-1
 
 EREND   DC EREND2-EREND-1
-          
+
 EREND2
 
 ; Bias voltages for the LBL CCD
@@ -536,8 +540,8 @@ Btest           EQU     0.5     ; bias test voltage
 CK_ZERO         EQU     0.0
 VCLK_HI         EQU     5.0
 VCLK_LO         EQU     -5.0
-HCLK_HI         EQU     4.0 
-HCLK_LO         EQU     -4.0 
+HCLK_HI         EQU     4.0
+HCLK_LO         EQU     -4.0
 TGATE_HI        EQU     5.0
 TGATE_LO        EQU     -3.0
 
@@ -587,7 +591,7 @@ DACS    DC      END_DACS-DACS-1
 	DC	$242000+@CVI((DG_HI+Vmax)/(2*Vmax)*255)		; Pin #11, DG_U
 	DC	$244000+@CVI((DG_LO+Vmax)/(2*Vmax)*255)
 	DC	$248000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)	; Pin #12, Unused
-	DC	$250000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)        
+	DC	$250000+@CVI((CK_ZERO+Vmax)/(2*Vmax)*255)
 
 	DC	$260100+@CVI((HCLK_HI+Vmax)/(2*Vmax)*255)	; Pin #13, HU1
 	DC	$260200+@CVI((HCLK_LO+Vmax)/(2*Vmax)*255)
@@ -627,6 +631,3 @@ DACS    DC      END_DACS-DACS-1
         DC      $0ec000+@CVI((BZERO+10)/20*4095)        ; pin 12
         DC      $0C8600                                 ; OUTOFFA = 000 sg 2007-05-23
 END_DACS
-
-        
-      
