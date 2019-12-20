@@ -21,3 +21,6 @@ CMakeFiles/
 
 # ignore all .pdf files in the doc/ directory and any of its subdirectories
 #doc/**/*.pdf
+
+.DS_Store
+tim.ls
