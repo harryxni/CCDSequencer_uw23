@@ -315,8 +315,9 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
         DC      'OGW',CHG_OGW
         DC      'SWW',CHG_SWW
 	DC      'CSL',CH_SDL
+	DC      'CSS',CH_SDO
 	DC      'CPL',CH_PDL
-
+	DC      'CPP',CH_PDO
 
 
 ; New LBNL commands

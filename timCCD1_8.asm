@@ -864,7 +864,7 @@ SNSBIN  MOVE    X:(R3)+,X0
 ;PARALLEL Time changer
 ;------------------------
 
-CH_PDL  MOVE    X:(R3)+,X0
+CH_PDO  MOVE    X:(R3)+,X0
         MOVE	Y:PD01,A
         AND	#$FFFF,A
         OR	X0,A
@@ -937,6 +937,7 @@ CH_PDL  MOVE    X:(R3)+,X0
         NOP
         MOVE	A1,Y:PD12
 
+CH_PDL  MOVE    X:(R3)+,X0
         MOVE	Y:PDL1,A
         AND	#$FFFF,A
         OR	X0,A
@@ -998,7 +999,7 @@ CH_PDL  MOVE    X:(R3)+,X0
 ;SERIAL Time changer
 ;------------------------
 
-CH_SDL  MOVE    X:(R3)+,X0
+CH_SDO  MOVE    X:(R3)+,X0
         MOVE	Y:SD01,A
         AND	#$FFFF,A
         OR	X0,A
@@ -1071,6 +1072,7 @@ CH_SDL  MOVE    X:(R3)+,X0
         NOP
         MOVE	A1,Y:SD12
 
+CH_SDL  MOVE    X:(R3)+,X0
         MOVE	Y:SDL1,A
         AND	#$FFFF,A
         OR	X0,A
