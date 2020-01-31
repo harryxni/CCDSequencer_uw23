@@ -860,6 +860,272 @@ SNSBIN  MOVE    X:(R3)+,X0
         JMP     <FINISH
 
 
+;------------------------
+;PARALLEL Time changer
+;------------------------
+
+CH_PDL  MOVE    X:(R3)+,X0
+        MOVE	Y:PD01,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD01
+
+        MOVE	Y:PD02,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD02
+
+	MOVE	Y:PD03,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD03
+
+	MOVE	Y:PD04,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD04
+
+	MOVE	Y:PD05,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD05
+
+	MOVE	Y:PD06,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD06
+
+	MOVE	Y:PD07,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD07
+
+	MOVE	Y:PD08,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD08
+
+	MOVE	Y:PD09,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD09
+
+	MOVE	Y:PD10,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD10
+
+	MOVE	Y:PD11,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD11
+
+	MOVE	Y:PD12,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PD12
+
+        MOVE	Y:PDL1,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL1
+
+        MOVE	Y:PDL2,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL2
+
+	MOVE	Y:PDL3,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL3
+
+	MOVE	Y:PDL4,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL4
+
+	MOVE	Y:PDL5,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL5
+
+	MOVE	Y:PDL6,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL6
+
+	MOVE	Y:PDL7,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL7
+
+	MOVE	Y:PDL8,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL8
+
+	MOVE	Y:PDL9,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:PDL9
+
+        JMP     <FINISH
+
+
+;------------------------
+;SERIAL Time changer
+;------------------------
+
+CH_SDL  MOVE    X:(R3)+,X0
+        MOVE	Y:SD01,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD01
+
+        MOVE	Y:SD02,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD02
+
+	MOVE	Y:SD03,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD03
+
+	MOVE	Y:SD04,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD04
+
+	MOVE	Y:SD05,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD05
+
+	MOVE	Y:SD06,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD06
+
+	MOVE	Y:SD07,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD07
+
+	MOVE	Y:SD08,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD08
+
+	MOVE	Y:SD09,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD09
+
+	MOVE	Y:SD10,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD10
+
+	MOVE	Y:SD11,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD11
+
+	MOVE	Y:SD12,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SD12
+
+        MOVE	Y:SDL1,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL1
+
+        MOVE	Y:SDL2,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL2
+
+	MOVE	Y:SDL3,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL3
+
+	MOVE	Y:SDL4,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL4
+
+	MOVE	Y:SDL5,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL5
+
+	MOVE	Y:SDL6,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL6
+
+	MOVE	Y:SDL7,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL7
+
+	MOVE	Y:SDL8,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL8
+
+	MOVE	Y:SDL9,A
+        AND	#$FFFF,A
+        OR	X0,A
+        NOP
+        MOVE	A1,Y:SDL9
+
+        JMP     <FINISH
 
 ;;;;;;;;;;;;;;;;;;
 

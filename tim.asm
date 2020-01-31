@@ -314,6 +314,8 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
         DC      'RSW',CHG_RSW
         DC      'OGW',CHG_OGW
         DC      'SWW',CHG_SWW
+	DC      'CSL',CH_SDL
+	DC      'CPL',CH_PDL
 
 
 
