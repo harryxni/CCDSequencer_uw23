@@ -16,8 +16,8 @@
 
 POWER_OFF
 	JSR	<CLEAR_SWITCHES_AND_DACS ; Clear all analog switches
-	BSET	#LVEN,X:HDR 
-	BSET	#HVEN,X:HDR 
+	BSET	#LVEN,X:HDR
+	BSET	#HVEN,X:HDR
 	JMP	<FINISH
 
 ; Execute the power-on cycle, as a command
@@ -25,10 +25,10 @@ POWER_ON
 	JSR	<CLEAR_SWITCHES_AND_DACS	; Clear switches and DACs
 
 ; Turn on the low voltages (+/- 6.5V, +/- 16.5V) and delay
-	BCLR	#LVEN,X:HDR		; Set these signals to DSP outputs 
+	BCLR	#LVEN,X:HDR		; Set these signals to DSP outputs
 	MOVE	#2000000,X0
 	DO      X0,*+3			; Wait 20 millisec for settling
-	NOP 	
+	NOP
 
 ; Turn on the high +36 volt power line and delay
 	BCLR	#HVEN,X:HDR		; HVEN = Low => Turn on +36V
@@ -57,7 +57,7 @@ SET_BIASES
 	MOVEP	X:LATCH,Y:WRLATCH	; Write it to the hardware
 	JSR	<PAL_DLY		; Delay for all this to happen
 	MOVE	#DACS,R0		; Get starting address of DAC values
-	JSR	<WR_DACS		; Update the DACs 
+	JSR	<WR_DACS		; Update the DACs
 
 ; Let the DAC voltages all ramp up before exiting
 	MOVE	#400000,X0
@@ -73,7 +73,7 @@ WR_DACS	DO      Y:(R0)+,L_DAC		; Repeat Y:(R0)+ times
 	NOP
 L_DAC
 	RTS
-	
+
 SET_BIAS_VOLTAGES
 	JSR	<SET_BIASES
 	JMP	<FINISH
@@ -96,7 +96,7 @@ CLEAR_SWITCHES_AND_DACS
 	MOVE	B,Y:WRSS
 	JSR	<PAL_DLY	; Delay for the serial data transmission
 	ADD	X1,B
-L_VIDEO	
+L_VIDEO
 	BCLR	#3,X:PCRD		; Turn the serial clock off
 	RTS
 
@@ -106,9 +106,9 @@ SET_SHUTTER_STATE
 	OR	X0,A
 	NOP
 	MOVE	A1,X:LATCH
-	MOVEP	A1,Y:WRLATCH	
-	RTS	
-	
+	MOVEP	A1,Y:WRLATCH
+	RTS
+
 ; Open the shutter from the timing board, executed as a command
 OPEN_SHUTTER
 	MOVE	#0,X0
@@ -161,16 +161,51 @@ END_EXP	BCLR	#TIM_BIT,X:TCSR0	; Disable the timer
 
 ; Start the exposure, operate the shutter, and initiate the CCD readout
 START_EXPOSURE
-	MOVE	#$020102,B		; Initialize the PCI image address
-	JSR	<XMT_WRD
-	MOVE	#'IIA',B
-	JSR	<XMT_WRD
+; Test for continuous readout
+	MOVE Y:<N_FRAMES,A
+	CMP #1,A
+	JLE <INIT_PCI_BOARD
+
+INIT_FRAME_COUNT
+	JSR <WAIT_TO_FINISH_CLOCKING
+	MOVE #$020102,B ; Initialize the PCI frame counter
+	JSR <XMT_WRD
+	MOVE #'IFC',B
+	JSR <XMT_WRD
+	MOVE #0,X0
+	MOVE X0,Y:<I_FRAME ; Initialize the frame number
+	JMP <INIT_PCI_BOARD
+	; Start up the next frame of the coaddition series
+NEXT_FRAME
+	MOVE Y:<I_FRAME,A ; Get the # of frames coadded so far
+	ADD #1,A
+	MOVE Y:<N_FRAMES,X0 ; See if we've coadded enough frames
+	MOVE A1,Y:<I_FRAME ; Increment the coaddition frame counter
+	CMP X0,A
+	JGE <RDC_END ; End of coaddition sequence
+
+	MOVE Y:<IBUFFER,A ; Get the position in the buffer
+	ADD #1,A
+	MOVE Y:<N_FPB,X0
+	MOVE A1,Y:<IBUFFER
+	CMP X0,A
+	JLT <AGAIN ; Test if the frame buffer is full
+
+INIT_PCI_BOARD
+	MOVE #0,X0
+	MOVE X0,Y:<IBUFFER ; IBUFFER counts from 0 to N_FPB
+	MOVE #$020102,B
+	JSR <XMT_WRD
+	MOVE #'IIA',B ; Initialize the PCI image address
+	JSR <XMT_WRD
+
 
 	MOVE	#<COM_BUF,R3
 	JSR	<GET_RCV		; Check for FO command
-	JCS	<PRC_RCV		; Process the command 
+	JCS	<PRC_RCV		; Process the command
 	MOVE	#TST_RCV,R0		; Process commands during the exposure
 	MOVE	R0,X:<IDL_ADR
+
 	JSR	<WAIT_TO_FINISH_CLOCKING
 
 ; Operate the shutter if needed and begin exposure
@@ -180,29 +215,31 @@ L_SEX0	MOVE	#L_SEX1,R7		; Return address at end of exposure
 	JMP	<EXPOSE			; Delay for specified exposure time
 L_SEX1
 
+JMP	<RDCCD
+
 ;brought in 3/21/2011 r.a.
 STR_RDC	JSR	<PCI_READ_IMAGE		; Get the PCI board reading the image
 
 ;	JCLR	#SHUT,X:STATUS,S_DEL0
 ;	JSR	<CSHUT			; Close the shutter if necessary
-        MOVE    Y:<SH_DEL,A
-        TST     A
-        JLE     <S_DEL0
-        MOVE    #100000,X0
-        DO      A,S_DEL0                ; Delay by Y:SH_DEL milliseconds
-        DO      X0,S_DEL1
-        NOP
-S_DEL1  NOP
-S_DEL0
+;        MOVE    Y:<SH_DEL,A
+;        TST     A
+;        JLE     <S_DEL0
+;        MOVE    #100000,X0
+;        DO      A,S_DEL0                ; Delay by Y:SH_DEL milliseconds
+;        DO      X0,S_DEL1
+;        NOP
+;S_DEL1  NOP
+;S_DEL0
 
 ; this section brought in for the new roi code from leachEmail\lbnl_genIII\  3/21/2011 r.a.
 ;  must do some stuff b4 the jump. r.a.
 ;  shutter, waiting for it to close and then reading out
-TST_SYN	JSET	#TST_IMG,X:STATUS,SYNTHETIC_IMAGE
+;TST_SYN	JSET	#TST_IMG,X:STATUS,SYNTHETIC_IMAGE
 
-	MOVE    #<PARALLELS_DURING_READOUT,R0
-	JSR     <CLOCK
-	JMP	<RDCCD			; Finally, go read out the CCD
+;	MOVE    #<PARALLELS_DURING_READOUT,R0
+;	JSR     <CLOCK
+;	JMP	<RDCCD			; Finally, go read out the CCD
 
 ; Set software to IDLE mode
 IDL     MOVE    #IDLE,X0                ; Exercise clocks when idling
@@ -288,9 +325,9 @@ SYNTHETIC_IMAGE
 	MOVE	A,B
 	JSR	<XMT_PIX		;  transmit them
 	NOP
-LSR_TST	
+LSR_TST
 	NOP
-LPR_TST	
+LPR_TST
         JMP     <RDC_END		; Normal exit
 
 ; Transmit the 16-bit pixel datum in B1 to the host computer
@@ -341,26 +378,26 @@ PCI_READ_IMAGE
 	JSR	<XMT_WRD
         MOVE	Y:TOTALCOL,B			; Number of columns to read
 	JSR	<XMT_WRD
-	MOVE	Y:NPR,B			; Number of rows to read		
+	MOVE	Y:NPR,B			; Number of rows to read
 	JSR	<XMT_WRD
 	RTS
 
 ; Wait for the clocking to be complete before proceeding
 WAIT_TO_FINISH_CLOCKING
-	JSET	#SSFEF,X:PDRD,*		; Wait for the SS FIFO to be empty	
+	JSET	#SSFEF,X:PDRD,*		; Wait for the SS FIFO to be empty
 	RTS
 
 ; This MOVEP instruction executes in 30 nanosec, 20 nanosec for the MOVEP,
-;   and 10 nanosec for the wait state that is required for SRAM writes and 
+;   and 10 nanosec for the wait state that is required for SRAM writes and
 ;   FIFO setup times. It looks reliable, so will be used for now.
 
 ; Core subroutine for clocking out CCD charge
 CLOCK	JCLR	#SSFHF,X:HDR,*		; Only write to FIFO if < half full
 	NOP
 	JCLR	#SSFHF,X:HDR,CLOCK	; Guard against metastability
-	MOVE    Y:(R0)+,X0      	; # of waveform entries 
+	MOVE    Y:(R0)+,X0      	; # of waveform entries
 	DO      X0,CLK1                 ; Repeat X0 times
-	MOVEP	Y:(R0)+,Y:WRSS		; 30 nsec Write the waveform to the SS 	
+	MOVEP	Y:(R0)+,Y:WRSS		; 30 nsec Write the waveform to the SS
 CLK1
 	NOP
 	RTS                     	; Return from subroutine
@@ -382,7 +419,7 @@ READ_CONTROLLER_CONFIGURATION
 	JMP	<FINISH1
 
 ; Set the video processor gain and integrator speed for all video boards
-;  Command syntax is  SGN  #GAIN  #SPEED, #GAIN = 1, 2, 5 or 10	
+;  Command syntax is  SGN  #GAIN  #SPEED, #GAIN = 1, 2, 5 or 10
 ;					  #SPEED = 0 for slow, 1 for fast
 ST_GAIN	BSET	#3,X:PCRD	; Turn on the serial clock
 	MOVE	X:(R3)+,A	; Gain value (1,2,5 or 10)
@@ -533,7 +570,7 @@ XMT_SBN	JSR	<XMIT_A_WORD	; Transmit A to TIM-A-STD
 ERR_SBN	MOVE	X:(R3)+,A	; Read and discard the fourth argument
 	BCLR	#3,X:PCRD	; Turn the serial clock off
 	JMP	<ERROR
-	
+
 ; Specify the MUX value to be output on the clock driver board
 ; Command syntax is  SMX  #clock_driver_board #MUX1 #MUX2
 ;				#clock_driver_board from 0 to 15
@@ -643,7 +680,7 @@ ER_T2   MOVE    #EREND,R0       ; Get starting address of DAC values
 
 
   ; Specify subarray readout coordinates, one rectangle only
-SET_SUBARRAY_SIZES	
+SET_SUBARRAY_SIZES
 	BCLR	#ST_SA,X:<STATUS	; Subarray not yet activated
 	MOVE    X:(R3)+,X0
 	MOVE	X0,Y:<NRBIAS		; Number of bias pixels to read
@@ -661,13 +698,13 @@ SET_SUBARRAY_POSITIONS
 	MOVE	X:(R3)+,X0
 	MOVE	X0,Y:<NS_SKP1	; Number of columns (serials) clears before
 	MOVE	X:(R3)+,X0	;  the subarray readout
-	MOVE	X0,Y:<NS_SKP2	; Number of columns (serials) clears after	
+	MOVE	X0,Y:<NS_SKP2	; Number of columns (serials) clears after
 	JMP	<FINISH		;  the subarray readout
 
-	
+
 
 ;***********************   Delay 1 msec
-LNG_DLY DO      #4050,LNGDLY     
+LNG_DLY DO      #4050,LNGDLY
         NOP
 LNGDLY
         RTS
@@ -1135,10 +1172,25 @@ CH_SDL  MOVE    X:(R3)+,X0
 
 ;;;;;;;;;;;;;;;;;;
 
+;------------------------
+;Continuous readout commands
+;------------------------
+;
+SET_NUMBER_OF_FRAMES ; Number of frames to obtain
+MOVE X:(R3)+,X0 ;   in an exposure sequence
+MOVE X0,Y:<N_FRAMES
+JMP <FINISH
+
+SET_NUMBER_OF_FRAMES_PER_BUFFER ; Number of frames in each image
+MOVE X:(R3)+,X0 ;   buffer in the host computer
+MOVE X0,Y:<N_FPB ;   system memory
+JMP <FINISH
+
+
 
 
 ; Select which readouts to process
-;   'SOS'  Amplifier_name  
+;   'SOS'  Amplifier_name
 ;       Amplifier_name = '__L', '__U', '_LU'
 
 SEL_OS  MOVE    X:(R3)+,X0              ; Get amplifier(s) name
@@ -1182,8 +1234,8 @@ CMP_LR  MOVE    #'_LU',A                ; U and L = readouts #0 and #1
         CMP     X0,A
         JNE     <CMP_12
         BCLR    #SPLIT_P,X:STATUS
-  	MOVE	#SERIAL_SKIP_LR,X0   
-	MOVE	X0,Y:SERIAL_SKIP        ;  
+  	MOVE	#SERIAL_SKIP_LR,X0
+	MOVE	X0,Y:SERIAL_SKIP        ;
         MOVE	#SERIAL_READ_LR_STAGE1,X0
 	MOVE	X0,Y:<SERIAL_READ
         MOVE    #$00F040,X0             ; Transmit channel 0&1
