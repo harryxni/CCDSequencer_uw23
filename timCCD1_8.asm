@@ -937,6 +937,8 @@ CH_PDO  MOVE    X:(R3)+,X0
         NOP
         MOVE	A1,Y:PD12
 
+	JMP     <FINISH
+
 CH_PDL  MOVE    X:(R3)+,X0
         MOVE	Y:PDL1,A
         AND	#$FFFF,A
@@ -1071,6 +1073,8 @@ CH_SDO  MOVE    X:(R3)+,X0
         OR	X0,A
         NOP
         MOVE	A1,Y:SD12
+
+	JMP     <FINISH
 
 CH_SDL  MOVE    X:(R3)+,X0
         MOVE	Y:SDL1,A
