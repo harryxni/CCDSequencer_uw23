@@ -206,6 +206,7 @@ INIT_PCI_BOARD
 	MOVE	#TST_RCV,R0		; Process commands during the exposure
 	MOVE	R0,X:<IDL_ADR
 
+AGAIN
 	JSR	<WAIT_TO_FINISH_CLOCKING
 
 ; Operate the shutter if needed and begin exposure
@@ -215,7 +216,7 @@ L_SEX0	MOVE	#L_SEX1,R7		; Return address at end of exposure
 	JMP	<EXPOSE			; Delay for specified exposure time
 L_SEX1
 
-JMP	<RDCCD
+	JMP	<RDCCD
 
 ;brought in 3/21/2011 r.a.
 STR_RDC	JSR	<PCI_READ_IMAGE		; Get the PCI board reading the image
@@ -1177,14 +1178,14 @@ CH_SDL  MOVE    X:(R3)+,X0
 ;------------------------
 ;
 SET_NUMBER_OF_FRAMES ; Number of frames to obtain
-MOVE X:(R3)+,X0 ;   in an exposure sequence
-MOVE X0,Y:<N_FRAMES
-JMP <FINISH
+	MOVE X:(R3)+,X0 ;   in an exposure sequence
+	MOVE X0,Y:<N_FRAMES
+	JMP <FINISH
 
 SET_NUMBER_OF_FRAMES_PER_BUFFER ; Number of frames in each image
-MOVE X:(R3)+,X0 ;   buffer in the host computer
-MOVE X0,Y:<N_FPB ;   system memory
-JMP <FINISH
+	MOVE X:(R3)+,X0 ;   buffer in the host computer
+	MOVE X0,Y:<N_FPB ;   system memory
+	JMP <FINISH
 
 
 
