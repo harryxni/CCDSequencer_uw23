@@ -333,7 +333,7 @@ DLY2    DC      VIDEO+%0000111  ; Integrate for Y:<I_DELAY microsec
 
 
         ;Move charge to Sense node by SW->hi and then SW->lo, in a pulse mode sequence
-        DC	CLK3+SW_DELAY+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+RH+WH
+SWD1    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+RH+WH
 POD1    DC	CLK3+HU1H+HU2L+HU3H+HL1H+HL2L+HL3H+DUMPGH+RH+WL
 
 
