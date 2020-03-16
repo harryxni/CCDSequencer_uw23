@@ -46,8 +46,8 @@ CC      EQU     CCDVIDREV3B+TIMREV5+UTILREV3+SHUTTER_CC+TEMP_POLY+SUBARRAY+SPLIT
 
 IDLE	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns. If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers each reading half the number of pixels.
 	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
-        ASR     A                       ; Split in 2 
-	NOP                             ; 
+        ASR     A                       ; Split in 2
+	NOP                             ;
 	MOVE	A,Y:<NSIDLE		; Number of columns in each subimage
 	DO      Y:<NSIDLE,IDL1     	; Loop over number of pixels per line
         MOVE    Y:<SERIAL_READ,R0 	; To be able to set SERIAL_READ dynamically, it needs to be assigned Y:<SERIAL_READ
@@ -70,6 +70,8 @@ PIT_SK	NOP
 
 DES     MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
+        MOVE	#FIRE_RESET_GATE,R0
+      	JSR	<CLOCK
 
 CTN	MOVE	#COM_BUF,R3
 	JSR	<GET_RCV		; Check for FO or SSI commands
@@ -82,9 +84,9 @@ IDL1
 	JSR     <CLOCK  		; Go clock out the CCD charge
         MOVE    #FIRE_RESET_GATE,R0
         JSR     <CLOCK
-	JMP     <IDLE	
+	JMP     <IDLE
 
-	
+
 
 ;  *****************  Exposure and readout routines  *****************
 
@@ -102,8 +104,8 @@ RDCCD	CLR	A
 ;If SPLIT_S bit in X:STATUS is set, it means we have _LR. So serial register must be split in 2 since we have 2 amplifiers
 ;each reading half the number of pixels.
 	JCLR    #SPLIT_S,X:STATUS,*+3   ; Test if SPLIT_S bit in X:STATUS is set. If not, PC <- PC+3
-        ASR     A                       ; Split in 2 
-	NOP                             ; 
+        ASR     A                       ; Split in 2
+	NOP                             ;
 	MOVE	A,Y:<NS_READ		; Number of columns in each subimage
 	JMP	<WT_CLK
 
@@ -188,7 +190,7 @@ L_READ	DO	Y:<NS_READ,L_RD
         JSR     <CLOCK
         NOP
 L_SBIN
-	
+
         MOVE	Y:<AMPLTYPE,X0
         MOVE    #$0,A
         CMP	X0,A
@@ -212,8 +214,8 @@ DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
 	MOVE	#FIRE_RESET_GATE,R0
 	JSR	<CLOCK
-	
-CTNR	
+
+CTNR
 	NOP
 L_RD
 
@@ -256,8 +258,8 @@ RDC_E	JSR	<WAIT_TO_FINISH_CLOCKING
 	BCLR	#ST_RDC,X:<STATUS	; Set status to not reading out
         JMP     <START
 ; back 2 normal time/space continum
-        
-	INCLUDE "timCCD1_8.asm"                 ; Generic 	
+
+	INCLUDE "timCCD1_8.asm"                 ; Generic
 
 TIMBOOT_X_MEMORY	EQU	@LCV(L)
 
@@ -281,7 +283,7 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'OSH',OPEN_SHUTTER
 	DC	'CSH',CLOSE_SHUTTER
 	DC	'RDC',RDCCD 			; Begin CCD readout
-	DC	'CLR',CLEAR  			; Fast clear the CCD   
+	DC	'CLR',CLEAR  			; Fast clear the CCD
 
 ; Exposure and readout control routines
 	DC	'SET',SET_EXPOSURE_TIME
@@ -295,14 +297,14 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'SSR',SET_SKIPPER_REPEAT
 
 ; Support routines
-	DC	'SGN',ST_GAIN      
+	DC	'SGN',ST_GAIN
 	DC	'SBN',SET_BIAS_NUMBER
 	DC	'SMX',SET_MUX
 	DC	'CSW',CLR_SWS
 	DC	'SOS',SEL_OS
 	DC	'SSS',SET_SUBARRAY_SIZES
 	DC	'SSP',SET_SUBARRAY_POSITIONS
-	DC	'RCC',READ_CONTROLLER_CONFIGURATION 
+	DC	'RCC',READ_CONTROLLER_CONFIGURATION
         DC	'SAT',SEL_AT
         DC      'VDR',SEL_VDIR
         DC      'HDR',HCLK_DRXN
@@ -323,14 +325,14 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 
 
 ; New LBNL commands
-        DC      'ERS',ERASE             ; Persistent Image Erase        
-        DC      'HLD',HOLD_CLK          ; Stop clocking during erase    
+        DC      'ERS',ERASE             ; Persistent Image Erase
+        DC      'HLD',HOLD_CLK          ; Stop clocking during erase
 
-        
+
 END_APPLICATON_COMMAND_TABLE	EQU	@LCV(L)
 
 	IF	@SCP("DOWNLOAD","HOST")
-NUM_COM			EQU	(@LCV(R)-COM_TBL_R)/2	; Number of boot + 
+NUM_COM			EQU	(@LCV(R)-COM_TBL_R)/2	; Number of boot +
 							;  application commands
 EXPOSING		EQU	CHK_TIM			; Address if exposing
 CONTINUE_READING	EQU	CONTINUE_READ 		; Address if reading out
@@ -353,7 +355,7 @@ NPCLR   DC      NP_CLR    	; To clear the parallel register
 NSBIN   DC      1       	; Serial binning parameter
 NPBIN   DC      1       	; Parallel binning parameter
 TST_DAT	DC	0		; Temporary definition for test images
-SH_DEL	DC	10		; Delay in milliseconds between shutter closing 
+SH_DEL	DC	10		; Delay in milliseconds between shutter closing
 				;   and image readout
 CONFIG	DC	CC		; Controller configuration
 NS_READ DC      0               ; brought in for roi r.a. 3/21/2011
@@ -406,4 +408,3 @@ END_APPLICATON_Y_MEMORY	EQU	@LCV(L)
 
 ; End of program
 	END
-
