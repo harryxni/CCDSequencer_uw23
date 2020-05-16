@@ -70,6 +70,8 @@ PIT_SK	NOP
 
 DES     MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
+        MOVE	#FIRE_RESET_GATE,R0
+      	JSR	<CLOCK
 
 CTN	MOVE	#COM_BUF,R3
 	JSR	<GET_RCV		; Check for FO or SSI commands
@@ -80,7 +82,7 @@ NO_COM	NOP
 IDL1
         MOVE    Y:<PARL,R0		; Address of parallel clocking waveform
 	JSR     <CLOCK  		; Go clock out the CCD charge
-        MOVE    #RESET_AFTER_PARALLEL,R0
+        MOVE    #FIRE_RESET_GATE,R0
         JSR     <CLOCK
 	JMP     <IDLE
 
@@ -130,7 +132,7 @@ WT_CLK
 	DO	Y:<NPBIN,L_PSKIP
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
-        MOVE    #RESET_AFTER_PARALLEL,R0
+        MOVE    #FIRE_RESET_GATE,R0
         JSR     <CLOCK
         NOP
 L_PSKIP	NOP
@@ -150,7 +152,7 @@ L_CLRSR		                     	; Do loop restriction
 	DO	Y:<NPBIN,L_PBIN
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
-        MOVE    #RESET_AFTER_PARALLEL,R0
+        MOVE    #FIRE_RESET_GATE,R0
         JSR     <CLOCK
 
 	NOP
@@ -210,6 +212,8 @@ DESR    MOVE    #PIT_DESI_SERIAL_READ,R0
         JSR     <CLOCK
         MOVE    #SK_SEND_BUFFER,R0
         JSR     <CLOCK
+	MOVE	#FIRE_RESET_GATE,R0
+	JSR	<CLOCK
 
 CTNR
 	NOP
@@ -243,31 +247,24 @@ L_BRD	NOP
 END_ROW	NOP
 LPR	NOP				; End of parallel loop
 
-
 ; This is code for continuous readout - check if more frames are needed
-CHK_NXT MOVE Y:<N_FRAMES,A ; Are we in continuous readout mode?
+CHKNXT	MOVE Y:N_FRAMES,A
 	CMP #1,A
 	JLE <RDC_END
-	BCLR #ST_RDC,X:<STATUS ; Set status to not reading out
+	BCLR #ST_RDC,X:<STATUS		;Bit test #ST_RDC bit in X:<STATUS and clear 
 	JSR <WAIT_TO_FINISH_CLOCKING
-
-; Check for a command once. Only the ABORT command should be issued.
-	MOVE #COM_BUF,R3
-	JSR <GET_RCV ; Was a command received?
-	JCC <NEXT_FRAME ; If no, get the next frame
-	JMP <PRC_RCV ; If yes, go process it
+	JMP <NEXT_FRAME
 
 ; Restore the controller to non-image data transfer and idling if necessary
-RDC_END JCLR #IDLMODE,X:<STATUS,NO_IDL
-	MOVE #IDLE,R0
-	MOVE R0,X:<IDL_ADR
-	JMP <RDC_E
-NO_IDL	MOVE #TST_RCV,R0 ; Don't idle after readout
-	MOVE R0,X:<IDL_ADR
-RDC_E 	JSR <WAIT_TO_FINISH_CLOCKING
-	BCLR #ST_RDC,X:<STATUS ; Set status to not reading out
+RDC_END	JCLR	#IDLMODE,X:<STATUS,NO_IDL ; Don't idle after readout
+	MOVE	#IDLE,R0
+	MOVE	R0,X:<IDL_ADR
+	JMP	<RDC_E
+NO_IDL	MOVE	#TST_RCV,R0
+	MOVE	R0,X:<IDL_ADR
+RDC_E	JSR	<WAIT_TO_FINISH_CLOCKING
+	BCLR	#ST_RDC,X:<STATUS	; Set status to not reading out
         JMP     <START
-
 ; back 2 normal time/space continum
 
 	INCLUDE "timCCD1_8.asm"                 ; Generic
@@ -316,27 +313,28 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'SSS',SET_SUBARRAY_SIZES
 	DC	'SSP',SET_SUBARRAY_POSITIONS
 	DC	'RCC',READ_CONTROLLER_CONFIGURATION
-	DC	'SAT',SEL_AT
-	DC  	'VDR',SEL_VDIR
-	DC  	'HDR',HCLK_DRXN
-	DC  	'CIT',CHG_IDL
-	DC  	'STC',SET_TOTALCOL
-	DC  	'CPO',CH_POD
-	DC  	'CPR',CH_PRD
-	DC  	'NPB',SNPBIN
-	DC  	'NSB',SNSBIN
-	DC  	'DGW',CHG_DGW
-	DC  	'RSW',CHG_RSW
-	DC  	'OGW',CHG_OGW
-	DC  	'SWW',CHG_SWW
-	DC  	'CSL',CH_SDL
-	DC  	'CSS',CH_SDO
-	DC  	'CPL',CH_PDL
-	DC  	'CPP',CH_PDO
+        DC	'SAT',SEL_AT
+        DC      'VDR',SEL_VDIR
+        DC      'HDR',HCLK_DRXN
+        DC      'CIT',CHG_IDL
+        DC      'STC',SET_TOTALCOL
+        DC      'CPO',CH_POD
+        DC      'CPR',CH_PRD
+        DC      'NPB',SNPBIN
+        DC      'NSB',SNSBIN
+        DC      'DGW',CHG_DGW
+        DC      'RSW',CHG_RSW
+        DC      'OGW',CHG_OGW
+        DC      'SWW',CHG_SWW
+	DC      'CSL',CH_SDL
+	DC      'CSS',CH_SDO
+	DC      'CPL',CH_PDL
+	DC      'CPP',CH_PDO
 
 ;Continuous readout commands
-	DC  	'SNF',SET_NUMBER_OF_FRAMES
-	DC  	'FPB',SET_NUMBER_OF_FRAMES_PER_BUFFER
+	DC  	'SNF',SNFRMS
+	DC  	'FPB',NF_BFR
+
 
 
 ; New LBNL commands
@@ -415,10 +413,10 @@ AMPLTYPE    DC  0
 TOTALCOL    DC  0
 
 ; Continuous readout parameters
-N_FRAMES DC 1 ; Total number of frames to read out
-I_FRAME DC 0 ; Number of frames read out so far
-IBUFFER DC 0 ; Number of frames read into the PCI buffer
-N_FPB DC 0 ; Number of frames per PCI image buffer
+N_FRAMES	DC	0	; Total number of frames to read out
+I_FRAME	DC	0	; Number of frames read out so far
+IBUFFER	DC	0	; Number of frames read into the PCI buffer
+N_FPB		DC	0	; Number of frames per PCI image buffer
 
 
 ; Include the waveform table for the designated type of CCD
