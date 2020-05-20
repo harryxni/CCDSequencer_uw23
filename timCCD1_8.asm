@@ -161,6 +161,38 @@ END_EXP	BCLR	#TIM_BIT,X:TCSR0	; Disable the timer
 
 ; Start the exposure, operate the shutter, and initiate the CCD readout
 START_EXPOSURE
+; Test for continuous readout
+	MOVE Y:<N_FRAMES,A
+	CMP #1,A
+	JLE <INIT_PCI_BOARD
+
+INIT_FRAME_COUNT
+;	JSR <WAIT_TO_FINISH_CLOCKING
+	MOVE #$020102,B	; Initialize the PCI frame counter
+	JSR <XMT_WRD
+	MOVE #'IFC',B
+	JSR <XMT_WRD
+	MOVE #0,X0
+	MOVE X0,Y:<I_FRAME ; Initialize the frame number
+	JMP <INIT_PCI_BOARD
+
+; Start up the next frame of the coaddition series
+NEXT_FRAME	
+	MOVE Y:<I_FRAME,A ; Get the # of frames coadded so far
+	ADD #1,A
+	MOVE Y:<N_FRAMES,X0 ; See if we've coadded enough frames
+	MOVE A1,Y:<I_FRAME ; Increment the coaddition frame counter
+	CMP X0,A
+	JGE <RDC_END ; End of coaddition sequence
+;
+	MOVE Y:<IBUFFER,A ; Get the position in the buffer
+	ADD #1,A
+	MOVE Y:<N_FPB,X0
+	MOVE A1,Y:<IBUFFER
+	CMP X0,A
+	JLT <AGAIN ; Test if the frame buffer is full
+
+INIT_PCI_BOARD
 	MOVE	#$020102,B		; Initialize the PCI image address
 	JSR	<XMT_WRD
 	MOVE	#'IIA',B
@@ -171,8 +203,9 @@ START_EXPOSURE
 	JCS	<PRC_RCV		; Process the command 
 	MOVE	#TST_RCV,R0		; Process commands during the exposure
 	MOVE	R0,X:<IDL_ADR
-	JSR	<WAIT_TO_FINISH_CLOCKING
+	
 
+AGAIN	JSR	<WAIT_TO_FINISH_CLOCKING
 ; Operate the shutter if needed and begin exposure
 ;	JCLR	#SHUT,X:STATUS,L_SEX0
 ;	JSR	<OSHUT			; Open the shutter if needed
@@ -1139,8 +1172,21 @@ CH_SDL  MOVE    X:(R3)+,X0
 
         JMP     <FINISH
 
-;;;;;;;;;;;;;;;;;;
+;------------------------
+;Continuous readout commands
+;------------------------
 
+; Number of frames to obtain
+SNFRMS	MOVE X:(R3)+,X0
+	MOVE X0,Y:<N_FRAMES
+	JMP <FINISH
+
+; Number of frames in each image
+NF_BFR	MOVE X:(R3)+,X0
+	MOVE X0,Y:<N_FPB
+	JMP <FINISH 
+
+;;;;;;;;;;;;;;;;;;
 
 
 ; Select which readouts to process

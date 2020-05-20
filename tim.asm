@@ -247,6 +247,14 @@ L_BRD	NOP
 END_ROW	NOP
 LPR	NOP				; End of parallel loop
 
+; This is code for continuous readout - check if more frames are needed
+CHKNXT	MOVE Y:N_FRAMES,A
+	CMP #1,A
+	JLE <RDC_END
+	BCLR #ST_RDC,X:<STATUS		;Bit test #ST_RDC bit in X:<STATUS and clear 
+	JSR <WAIT_TO_FINISH_CLOCKING
+	JMP <NEXT_FRAME
+
 ; Restore the controller to non-image data transfer and idling if necessary
 RDC_END	JCLR	#IDLMODE,X:<STATUS,NO_IDL ; Don't idle after readout
 	MOVE	#IDLE,R0
@@ -322,6 +330,11 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC      'CSS',CH_SDO
 	DC      'CPL',CH_PDL
 	DC      'CPP',CH_PDO
+
+;Continuous readout commands
+	DC  	'SNF',SNFRMS
+	DC  	'FPB',NF_BFR
+
 
 
 ; New LBNL commands
@@ -399,6 +412,11 @@ PIT_SKREPEAT DC 8
 AMPLTYPE    DC  0
 TOTALCOL    DC  0
 
+; Continuous readout parameters
+N_FRAMES	DC	0	; Total number of frames to read out
+I_FRAME	DC	0	; Number of frames read out so far
+IBUFFER	DC	0	; Number of frames read into the PCI buffer
+N_FPB		DC	0	; Number of frames per PCI image buffer
 
 
 ; Include the waveform table for the designated type of CCD
