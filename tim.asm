@@ -54,7 +54,7 @@ IDLE	MOVE	Y:<NSR,A		; Move NSR into Y which stores the value of numColumns. If S
         JSR     <CLOCK  		; Clock Stage 1
 
         MOVE	Y:<AMPLTYPE,X0
-        MOVE    #$0,A
+        MOVE    #$0,A 	;Probalby checks if reg A is 0?
         CMP	X0,A
         BNE     <DES
 
@@ -133,7 +133,8 @@ WT_CLK
         MOVE    Y:<PARL,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge
         MOVE    #FIRE_RESET_GATE,R0
-        JSR     <CLOCK
+        MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ; Update to clear charge for DAMIC CCD
+	JSR     <CLOCK
         NOP
 L_PSKIP	NOP
 L_PSKP
@@ -142,12 +143,25 @@ L_PSKP
 CLR_SR	DO      Y:<NSCLR,L_CLRSR	; Loop over number of pixels to skip
 	MOVE    Y:<SERIAL_SKIP,R0	; Address of serial skipping waveforms
 	JSR     <CLOCK  		; Go clock out the CCD charge
+	NOP				
+	MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ;Update to clear charge for DAMIC CCD
+	JSR     <CLOCK
 	NOP
 L_CLRSR		                     	; Do loop restriction
 
 ; This is the main loop over each line to be read out
 	DO      Y:<NPR,LPR		; Number of rows to read out
-
+;Lines below clean out charge every row, updated for DAMIC
+;  Clear out the accumulated charge from the serial shift register
+	DO      Y:<NSCLR,L_SRCLR ; Loop over number of pixels to skip
+	MOVE    Y:<SERIAL_SKIP,R0 ; Address of serial skipping waveforms
+	JSR     <CLOCK	  ; Go clock out the CCD charge
+        NOP
+	MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ; Update to clear charge for DAMIC CCD
+	JSR     <CLOCK
+        NOP
+L_SRCLR
+	
 ; Exercise the parallel clocks, including binning if needed
 	DO	Y:<NPBIN,L_PBIN
         MOVE    Y:<PARL,R0
@@ -177,6 +191,9 @@ CONTINUE_READ
 	DO	Y:<NS_SKP1,L_SKP1	; Number of waveform entries total
 	MOVE	Y:<SERIAL_SKIP,R0	; Waveform table starting address
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
+	NOP
+	MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ; Update to clear charge for DAMIC CCD
+	JSR	<CLOCK
 	NOP
 L_SKP1
 
@@ -227,6 +244,9 @@ L_RD
 	MOVE	Y:<SERIAL_SKIP,R0	; Waveform table starting address
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charge
 	NOP
+	MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ; Update to clear charge for DAMIC CCD
+	JSR	<CLOCK
+	NOP
 L_SKP2
 
 ; And read the bias pixels if in subimage readout mode
@@ -243,6 +263,10 @@ L_BIAS	JCLR	#ST_SA,X:STATUS,END_ROW	; ST_SA = 0 => full image readout
 	MOVE	Y:<SERIAL_READ,R0
 	JSR     <CLOCK  		; Go clock out the CCD charge			; Go clock out the CCD charg
 	NOP
+	MOVE    #SERIAL_READ_CLRCHG_STAGE_2,R0 ; Update to clear charge for DAMIC CCD
+	JSR	<CLOCK
+	NOP
+
 L_BRD	NOP
 END_ROW	NOP
 LPR	NOP				; End of parallel loop
@@ -303,6 +327,8 @@ TIMBOOT_X_MEMORY	EQU	@LCV(L)
 	DC	'ABR',ABR_RDC
 	DC	'CRD',CONTINUE_READ
 	DC	'SSR',SET_SKIPPER_REPEAT
+	DC	'SSF',SET_SERIAL_FLUSH
+		
 
 ; Support routines
 	DC	'SGN',ST_GAIN
@@ -381,7 +407,7 @@ PDIR    DC      0
 ;SERIAL_READ	DC	SERIAL_READ_LR	; Address of serial reading waveforms  (2sides)
 ;SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms (2sides)
 
-SERIAL_SKIP 	DC	SERIAL_SKIP_LR	; Serial skipping waveforms was L
+SERIAL_SKIP 	DC	SERIAL_SKIP_L	; Serial skipping waveforms was L
 SERIAL_READ	DC	SERIAL_READ_LR_STAGE1	; Address of serial reading waveforms (1side 9/25/07 JE) was L
 SERIAL_CLEAR	DC	SERIAL_SKIP_LR	; Address of serial skipping waveforms(1side 9/25/07 JE) was L
 PARL    	DC	PARALLEL_1

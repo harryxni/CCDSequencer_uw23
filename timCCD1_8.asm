@@ -272,6 +272,12 @@ SET_TOTALCOL
         MOVE	X0,Y:TOTALCOL
         JMP	<FINISH
 
+;[ni] Set Serial Flush
+SET_SERIAL_FLUSH
+	MOVE	X:(R3)+,X0
+	MOVE	X0,Y:NSCLR
+	JMP	<FINISH
+	
 ; Read the time remaining until the exposure ends
 READ_EXPOSURE_TIME
 	MOVE	X:TCR0,Y1		; Read elapsed exposure time
